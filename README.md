@@ -13,17 +13,20 @@ Next.js (App Router) + Tailwind CSS, built mobile-first for both customers and t
 - **Admin panel** (`/admin`): a password-gated (demo only) dashboard mockup — weekly sales
   chart, orders table, menu/catering table.
 
-All product data, orders, and the admin password are mock/placeholder — see
-`lib/mockData.ts`. Nothing is wired to a real backend yet.
+The real logo (`public/logo.png`, also used for the favicon and app icons) and the real
+menu names/descriptions (from Jayro's flyers) are in. Orders, catering packages, and the
+admin password are still mock/placeholder — see `lib/mockData.ts`. Nothing is wired to a
+real backend yet.
 
 ## Still placeholder / not yet connected
 
-- `lib/mockData.ts` — `WHATSAPP_NUMBER` is a fake number; menu items, prices, and the
-  sample orders/sales numbers are invented for demonstration.
+- `lib/mockData.ts` — `WHATSAPP_NUMBER` is a fake number. Menu item **prices** are
+  placeholders (not on the flyers) pending Jayro's real numbers. Catering packages and
+  the sample orders/sales numbers are still invented for demonstration.
 - `/admin` accepts any password — real auth arrives once there's a backend.
 - No Google Sheets integration yet (planned: `Orders`, `Order_Items`, `Menu_Items`,
   `Addons`, `Catering_Packages`, `Config` tabs) and no Netlify deploy configured.
-- Logo and product photos are placeholders (gradient tiles + emoji) pending real assets.
+- Product photos are still placeholders (gradient tiles + emoji) pending the real photos.
 
 ## Development
 

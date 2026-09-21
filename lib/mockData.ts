@@ -2,63 +2,60 @@ import type { MockOrder, Product, SalesDay } from "./types";
 
 export const WHATSAPP_NUMBER = "15555555555"; // placeholder -- Jayro to provide the real business number
 
+// Real items from Jayro's flyers (2026-09-21). Prices are NOT on the flyers --
+// the numbers below are placeholders until he sends real prices.
 export const MENU: Product[] = [
   {
-    id: "tres-leches",
-    name: "Pastel Tres Leches",
-    description: "Bizcocho esponjoso banado en tres leches y canela.",
-    price: 32,
-    gradient: ["#F06292", "#E8B84B"],
+    id: "chocoflan",
+    name: "Chocoflan",
+    description: "La perfecta combinacion de pastel de chocolate y flan. Rinde para 8 a 10 personas.",
+    price: 35,
+    gradient: ["#B23764", "#E8B84B"],
     isCatering: false,
-    addons: [
-      { id: "velas", name: "Set de velas", price: 3 },
-      { id: "tarjeta", name: "Tarjeta personalizada", price: 2 },
-    ],
+    addons: [],
   },
   {
-    id: "flan",
-    name: "Flan Napolitano",
-    description: "Cremoso, con caramelo casero hecho a fuego lento.",
-    price: 18,
-    gradient: ["#E8B84B", "#F06292"],
-    isCatering: false,
-    addons: [{ id: "individual", name: "Porciones individuales", price: 4 }],
-  },
-  {
-    id: "cupcakes",
-    name: "Cupcakes Surtidos (caja de 6)",
-    description: "Sabores de temporada, decoracion a mano.",
-    price: 22,
-    gradient: ["#D84F7D", "#F06292"],
-    isCatering: false,
-    addons: [
-      { id: "chispas", name: "Chispas extra", price: 1 },
-      { id: "caja-regalo", name: "Caja de regalo", price: 3 },
-    ],
-  },
-  {
-    id: "cheesecake",
-    name: "Cheesecake de Fresa",
-    description: "Base de galleta, cubierto con salsa de fresa natural.",
+    id: "fresaflan",
+    name: "Fresaflan",
+    description: "Flan casero cubierto con fresas frescas.",
     price: 28,
     gradient: ["#F06292", "#D84F7D"],
     isCatering: false,
-    addons: [{ id: "topping-extra", name: "Topping de fresa extra", price: 3 }],
+    addons: [],
   },
   {
-    id: "brownies",
-    name: "Brownies de Chocolate (12 pz)",
-    description: "Chocolate belga, centro fundente.",
-    price: 20,
-    gradient: ["#B23764", "#E8B84B"],
+    id: "arroz-con-leche",
+    name: "Arroz con Leche",
+    description:
+      "Suave, cremoso y lleno de sabor casero: arroz de grano suave, leche cremosa, canela y pasas. Vaso de 12 oz.",
+    price: 7,
+    gradient: ["#E8B84B", "#F06292"],
     isCatering: false,
-    addons: [{ id: "nuez", name: "Con nuez", price: 2 }],
+    addons: [],
   },
   {
-    id: "alfajores",
-    name: "Alfajores de Dulce de Leche",
-    description: "Docena, banados en coco rallado.",
-    price: 16,
+    id: "gelatina-vainilla",
+    name: "Gelatina de Vainilla",
+    description: "Suave, cremosa y con un delicioso sabor a vainilla. Vaso de 12 oz.",
+    price: 6,
+    gradient: ["#F06292", "#E8B84B"],
+    isCatering: false,
+    addons: [],
+  },
+  {
+    id: "gelatina-mosaico",
+    name: "Gelatina Mosaico",
+    description: "Deliciosa gelatina con trozos de colores en una base cremosa y refrescante. Vaso de 12 oz.",
+    price: 7,
+    gradient: ["#D84F7D", "#F06292"],
+    isCatering: false,
+    addons: [],
+  },
+  {
+    id: "pan-de-banana",
+    name: "Pan de Banana",
+    description: "Pan casero de platano.",
+    price: 12,
     gradient: ["#E8B84B", "#B23764"],
     isCatering: false,
     addons: [],
@@ -111,11 +108,11 @@ export const CAROUSEL_SLIDES: { caption: string; gradient: [string, string] }[] 
 ];
 
 export const MOCK_ORDERS: MockOrder[] = [
-  { id: "0007", cliente: "Marisol Vega", detalle: "1x Pastel Tres Leches, 1x Cupcakes Surtidos", entrega: "941 Hill St, Belmont, CA", total: 54, estado: "nuevo" },
-  { id: "0006", cliente: "Jonathan Reyes", detalle: "2x Flan Napolitano", entrega: "Recoleccion en tienda", total: 36, estado: "confirmado" },
+  { id: "0007", cliente: "Marisol Vega", detalle: "1x Chocoflan, 2x Gelatina de Vainilla", entrega: "941 Hill St, Belmont, CA", total: 47, estado: "nuevo" },
+  { id: "0006", cliente: "Jonathan Reyes", detalle: "2x Arroz con Leche", entrega: "Recoleccion en tienda", total: 14, estado: "confirmado" },
   { id: "0005", cliente: "Priya Shah", detalle: "1x Mesa de Postres (20p)", entrega: "Evento - 2026-10-03", total: 205, estado: "confirmado" },
-  { id: "0004", cliente: "Diego Ramirez", detalle: "1x Cheesecake de Fresa, 1x Alfajores", entrega: "218 Ralston Ave, San Mateo, CA", total: 44, estado: "entregado" },
-  { id: "0003", cliente: "Amanda Cole", detalle: "3x Brownies de Chocolate", entrega: "Recoleccion en tienda", total: 60, estado: "entregado" },
+  { id: "0004", cliente: "Diego Ramirez", detalle: "1x Fresaflan, 1x Pan de Banana", entrega: "218 Ralston Ave, San Mateo, CA", total: 40, estado: "entregado" },
+  { id: "0003", cliente: "Amanda Cole", detalle: "3x Gelatina Mosaico", entrega: "Recoleccion en tienda", total: 21, estado: "entregado" },
 ];
 
 export const SALES_WEEK: SalesDay[] = [

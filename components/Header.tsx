@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 
 const navLinks = [
@@ -15,9 +16,14 @@ export default function Header() {
     <header className="sticky top-0 z-20 border-b border-brand-pink/20 bg-brand-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3">
         <a href="#" className="flex flex-shrink-0 items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-brand-pink to-brand-gold text-xl font-bold text-white shadow-sm">
-            E
-          </span>
+          <Image
+            src="/logo.png"
+            alt="Eve's Sweets"
+            width={44}
+            height={44}
+            priority
+            className="h-11 w-11 rounded-full shadow-sm"
+          />
           <span className="whitespace-nowrap font-script text-2xl leading-none text-brand-pink-dark">
             Eve&apos;s Sweets
           </span>
