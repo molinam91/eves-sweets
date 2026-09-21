@@ -12,6 +12,35 @@ function gradientIndex(gradient: [string, string]): number {
   return idx === -1 ? 0 : idx;
 }
 
+const MAX_PHOTO_DIMENSION = 800;
+
+/** Reads an image file into a size-capped JPEG data URL (kept small for localStorage). */
+function readPhotoFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("No se pudo leer la imagen."));
+      img.onload = () => {
+        const scale = Math.min(1, MAX_PHOTO_DIMENSION / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("No se pudo procesar la imagen."));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ProductFormModal({
   category,
   product,
@@ -31,7 +60,21 @@ export default function ProductFormModal({
   const [addons, setAddons] = useState<Addon[]>(product?.addons ?? []);
   const [addonName, setAddonName] = useState("");
   const [addonPrice, setAddonPrice] = useState("");
+  const [photo, setPhoto] = useState<string | undefined>(product?.photo);
+  const [photoError, setPhotoError] = useState("");
   const [error, setError] = useState("");
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoError("");
+    try {
+      setPhoto(await readPhotoFile(file));
+    } catch {
+      setPhotoError("No se pudo cargar esa foto. Intenta con otra imagen.");
+    }
+  }
 
   function handleAddAddon() {
     const trimmedName = addonName.trim();
@@ -68,6 +111,7 @@ export default function ProductFormModal({
       gradient: GRADIENT_PRESETS[colorIdx],
       isCatering: category === "catering",
       addons,
+      photo,
     };
 
     if (isEdit && product) {
@@ -146,11 +190,30 @@ export default function ProductFormModal({
           ))}
         </div>
 
-        {product?.photo && (
-          <p className="mt-3 text-[11px] text-foreground-soft">
-            Este articulo ya tiene una foto real; se conserva aunque cambies el color.
-          </p>
+        <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">Foto (opcional)</span>
+        {photo && (
+          <div className="mb-2 flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- small local preview of an in-memory data URL, not worth next/image here */}
+            <img src={photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
+            <button
+              type="button"
+              onClick={() => setPhoto(undefined)}
+              className="text-xs underline text-brand-danger"
+            >
+              Quitar foto
+            </button>
+          </div>
         )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoChange}
+          className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
+        />
+        {photoError && <p className="mt-1.5 text-xs text-brand-danger">{photoError}</p>}
+        <p className="mt-1.5 text-[11px] text-foreground-soft">
+          Por ahora la foto solo se guarda en este dispositivo; los clientes no la veran todavia.
+        </p>
 
         <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
           Toppings / extras (opcional)

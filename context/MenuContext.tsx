@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { type BackendMenuRow, fetchBackendSnapshot, saveMenuToBackend } from "@/lib/backend";
 import { DEFAULT_CATERING, DEFAULT_MENU } from "@/lib/mockData";
 import { uniqueSlug } from "@/lib/slug";
 import type { Addon, Product } from "@/lib/types";
@@ -14,6 +15,7 @@ export type ProductInput = {
   gradient: [string, string];
   isCatering: boolean;
   addons: Addon[];
+  photo?: string;
 };
 
 type MenuContextValue = {
@@ -29,6 +31,19 @@ type MenuContextValue = {
 const MenuContext = createContext<MenuContextValue | null>(null);
 
 const DEFAULT_PRODUCTS = [...DEFAULT_MENU, ...DEFAULT_CATERING];
+
+/** Photos are device-local only (too large for a sheet cell), so they're never sent to the backend. */
+function toBackendRow(p: Product): BackendMenuRow {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    gradient: p.gradient,
+    isCatering: p.isCatering,
+    addons: p.addons,
+  };
+}
 
 export function MenuProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
@@ -54,26 +69,56 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     }
   }, [products]);
 
+  // Shared backend (Google Sheet): pulls the real catalog once connected, keeping
+  // this browser's local photos (the sheet has no room for those) merged in by id.
+  useEffect(() => {
+    let cancelled = false;
+    fetchBackendSnapshot().then((snapshot) => {
+      if (cancelled || !snapshot) return;
+      setProducts((prev) => {
+        const localPhotoById = new Map(prev.map((p) => [p.id, p.photo]));
+        return snapshot.menu.map((item) => ({ ...item, photo: localPhotoById.get(item.id) }));
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const addProduct = useCallback((input: ProductInput): Product => {
     let created!: Product;
+    let next!: Product[];
     setProducts((prev) => {
       const id = uniqueSlug(input.name, prev.map((p) => p.id));
       created = { id, ...input };
-      return [...prev, created];
+      next = [...prev, created];
+      return next;
     });
+    saveMenuToBackend(next.map(toBackendRow));
     return created;
   }, []);
 
   const updateProduct = useCallback((id: string, input: ProductInput) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...input } : p)));
+    let next!: Product[];
+    setProducts((prev) => {
+      next = prev.map((p) => (p.id === id ? { ...p, ...input } : p));
+      return next;
+    });
+    saveMenuToBackend(next.map(toBackendRow));
   }, []);
 
   const deleteProduct = useCallback((id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    let next!: Product[];
+    setProducts((prev) => {
+      next = prev.filter((p) => p.id !== id);
+      return next;
+    });
+    saveMenuToBackend(next.map(toBackendRow));
   }, []);
 
   const resetToDefaults = useCallback(() => {
     setProducts(DEFAULT_PRODUCTS);
+    saveMenuToBackend(DEFAULT_PRODUCTS.map(toBackendRow));
   }, []);
 
   const menu = useMemo(() => products.filter((p) => !p.isCatering), [products]);

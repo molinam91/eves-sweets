@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { fetchBackendSnapshot, saveConfigToBackend, savePromosToBackend } from "@/lib/backend";
 import type { PromoCode, StoreRules } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-store-config-v1";
@@ -10,6 +11,7 @@ export const DEFAULT_RULES: StoreRules = {
   bulkMaxPrice: 10,
   bulkMinQty: 5,
   bulkFreeDeliveryQty: 5,
+  whatsappNumbers: ["15555555555"], // placeholder -- Jayro to provide the real business number
 };
 
 const DEFAULT_PROMO_CODES: PromoCode[] = [];
@@ -40,9 +42,11 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed: StoredConfig = JSON.parse(raw);
+        // Merge over defaults so a browser with an older saved shape (missing a
+        // field added later, like whatsappNumbers) still gets a valid value.
         // One-time hydration sync from localStorage (SSR has no access to it), not a loop.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRules(parsed.rules);
+        setRules({ ...DEFAULT_RULES, ...parsed.rules });
         setPromoCodes(parsed.promoCodes);
       }
     } catch {
@@ -59,20 +63,50 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     }
   }, [rules, promoCodes]);
 
-  const updateRules = useCallback((next: StoreRules) => setRules(next), []);
+  // Shared backend (Google Sheet): once connected, rules and promo codes are
+  // shared across every browser instead of living per-device.
+  useEffect(() => {
+    let cancelled = false;
+    fetchBackendSnapshot().then((snapshot) => {
+      if (cancelled || !snapshot) return;
+      setRules({ ...DEFAULT_RULES, ...snapshot.config });
+      setPromoCodes(snapshot.promos);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const updateRules = useCallback((next: StoreRules) => {
+    setRules(next);
+    saveConfigToBackend(next);
+  }, []);
 
   const addPromoCode = useCallback((promo: PromoCode) => {
-    setPromoCodes((prev) => [...prev, { ...promo, code: promo.code.toUpperCase() }]);
+    let next!: PromoCode[];
+    setPromoCodes((prev) => {
+      next = [...prev, { ...promo, code: promo.code.toUpperCase() }];
+      return next;
+    });
+    savePromosToBackend(next);
   }, []);
 
   const updatePromoCode = useCallback((code: string, promo: PromoCode) => {
-    setPromoCodes((prev) =>
-      prev.map((p) => (p.code === code ? { ...promo, code: promo.code.toUpperCase() } : p))
-    );
+    let next!: PromoCode[];
+    setPromoCodes((prev) => {
+      next = prev.map((p) => (p.code === code ? { ...promo, code: promo.code.toUpperCase() } : p));
+      return next;
+    });
+    savePromosToBackend(next);
   }, []);
 
   const deletePromoCode = useCallback((code: string) => {
-    setPromoCodes((prev) => prev.filter((p) => p.code !== code));
+    let next!: PromoCode[];
+    setPromoCodes((prev) => {
+      next = prev.filter((p) => p.code !== code);
+      return next;
+    });
+    savePromosToBackend(next);
   }, []);
 
   const findPromoCode = useCallback(

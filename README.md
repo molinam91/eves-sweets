@@ -18,15 +18,33 @@ menu names/descriptions (from Jayro's flyers) are in. Orders, catering packages,
 admin password are still mock/placeholder — see `lib/mockData.ts`. Nothing is wired to a
 real backend yet.
 
+## Backend
+
+Menu items, promo codes, store rules (delivery fee, bulk rule, WhatsApp numbers), and
+orders are stored in a Google Sheet through a Google Apps Script Web App
+(`lib/backend.ts`, script source at
+`/mnt/project-files/eves-sweets-sheets-backend/Code.gs`). Every browser fetches this
+shared snapshot on load and pushes changes back to it, so admin edits and customer
+orders reach everyone instead of staying per-device. Orders are polled every 20s so a
+new order placed on one device shows up in admin on another without a refresh.
+localStorage is still used as an offline/first-paint cache, so the site keeps working if
+the backend is briefly unreachable.
+
+The Web App URL is deployed with "Anyone" access, which is required for a static site to
+call it from the browser -- that also means the URL (visible in the page's JS bundle) can
+be called by anyone, not just this site. There's no login on the endpoint itself; the
+mitigation today is that the script only accepts a fixed set of actions and this is a
+low-stakes small-business ordering form. Revisit if abuse ever becomes a concern.
+
 ## Still placeholder / not yet connected
 
-- `lib/mockData.ts` — `WHATSAPP_NUMBER` is a fake number. Menu item **prices** are
-  placeholders (not on the flyers) pending Jayro's real numbers. Catering packages and
-  the sample orders/sales numbers are still invented for demonstration.
-- `/admin` accepts any password — real auth arrives once there's a backend.
-- No Google Sheets integration yet (planned: `Orders`, `Order_Items`, `Menu_Items`,
-  `Addons`, `Catering_Packages`, `Config` tabs) and no Netlify deploy configured.
-- Product photos are still placeholders (gradient tiles + emoji) pending the real photos.
+- Menu item **prices** are placeholders (not on the flyers) pending Jayro's real numbers.
+  Catering packages are still invented for demonstration.
+- `/admin` accepts any password — real auth would need its own backend work.
+- Product photos added from `/admin` are device-local only (stored as a data URL in
+  localStorage, never sent to the Sheet -- a spreadsheet cell can't hold an image). A
+  photo added on one device is not yet visible to customers on another; needs real file
+  storage (e.g. Google Drive or Netlify) to fix properly.
 
 ## Development
 

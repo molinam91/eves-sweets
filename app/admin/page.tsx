@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import OrderDetailModal from "@/components/admin/OrderDetailModal";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import PromoFormModal from "@/components/admin/PromoFormModal";
@@ -10,9 +10,17 @@ import { useLocale } from "@/context/LocaleContext";
 import { useMenu } from "@/context/MenuContext";
 import { useOrders } from "@/context/OrderContext";
 import { useStoreConfig } from "@/context/StoreConfigContext";
-import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
-import { SALES_WEEK } from "@/lib/mockData";
+import {
+  computeDeliveryFriday,
+  formatDeliveryDate,
+  mondayFirstIndex,
+  money,
+  pacificNow,
+  toPacificDate,
+} from "@/lib/delivery";
 import type { Order, Product, PromoCode } from "@/lib/types";
+
+const DAY_LABELS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 
 export default function AdminPage() {
   const { locale, t, toggleLocale } = useLocale();
@@ -67,7 +75,7 @@ function AdminDashboard() {
   const { locale, t, toggleLocale } = useLocale();
   const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
   const { promoCodes, deletePromoCode } = useStoreConfig();
-  const { orders, completeOrder } = useOrders();
+  const { orders, allOrders, completeOrder } = useOrders();
 
   const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
     null
@@ -75,8 +83,40 @@ function AdminDashboard() {
   const [promoModal, setPromoModal] = useState<{ promo?: PromoCode } | null>(null);
   const [orderDetail, setOrderDetail] = useState<Order | null>(null);
 
-  const totalWeek = SALES_WEEK.reduce((sum, d) => sum + d.value, 0);
-  const maxVal = Math.max(...SALES_WEEK.map((d) => d.value));
+  // Computed client-side only: on a statically exported page, doing this
+  // directly in render would bake in the build-time date instead of "today".
+  const [nextDeliveryLabel, setNextDeliveryLabel] = useState<string | null>(null);
+  useEffect(() => {
+    // Client-only: derives "today" from the visitor's clock, not the build-time render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNextDeliveryLabel(formatDeliveryDate(computeDeliveryFriday(), locale));
+  }, [locale]);
+
+  const [weekStats, setWeekStats] = useState<{ totals: number[]; total: number } | null>(null);
+  useEffect(() => {
+    const todayPacific = pacificNow();
+    const weekStart = new Date(todayPacific);
+    weekStart.setDate(todayPacific.getDate() - mondayFirstIndex(todayPacific));
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
+    const totals = DAY_LABELS.map(() => 0);
+    allOrders.forEach((order) => {
+      const created = toPacificDate(order.createdAt);
+      if (created >= weekStart && created < weekEnd) {
+        totals[mondayFirstIndex(created)] += order.total;
+      }
+    });
+    // Client-only: today's Pacific date determines the week window; must not run at build time.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWeekStats({ totals, total: totals.reduce((sum, v) => sum + v, 0) });
+  }, [allOrders]);
+
+  const weekTotals = weekStats?.totals ?? DAY_LABELS.map(() => 0);
+  const totalWeek = weekStats?.total ?? 0;
+  const hasSalesThisWeek = (weekStats?.total ?? 0) > 0;
+  const maxVal = Math.max(1, ...weekTotals);
 
   function handleDeleteProduct(product: Product) {
     if (window.confirm(`${t.admin_delete} "${product.name}"?`)) {
@@ -125,27 +165,29 @@ function AdminDashboard() {
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile label={t.admin_sales_week} value={money(totalWeek)} />
         <StatTile label={t.admin_new_orders} value={String(orders.length)} />
-        <StatTile
-          label={t.admin_next_delivery}
-          value={formatDeliveryDate(computeDeliveryFriday(), locale)}
-          small
-        />
+        <StatTile label={t.admin_next_delivery} value={nextDeliveryLabel ?? "..."} small />
       </div>
 
       <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
         <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_weekly_summary}</h2>
-        <div className="flex h-36 items-end gap-2.5">
-          {SALES_WEEK.map((d) => (
-            <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-              <span className="text-[11px] tabular-nums text-foreground-soft">${d.value}</span>
-              <div
-                className="w-full max-w-[34px] rounded-t-md bg-gradient-to-t from-brand-pink to-brand-gold"
-                style={{ height: `${Math.round((d.value / maxVal) * 100)}%` }}
-              />
-              <span className="text-[11px] text-foreground-soft">{d.day}</span>
-            </div>
-          ))}
-        </div>
+        {hasSalesThisWeek ? (
+          <div className="flex h-36 items-end gap-2.5">
+            {DAY_LABELS.map((day, i) => (
+              <div key={day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+                <span className="text-[11px] tabular-nums text-foreground-soft">{money(weekTotals[i])}</span>
+                <div
+                  className="w-full max-w-[34px] rounded-t-md bg-gradient-to-t from-brand-pink to-brand-gold"
+                  style={{ height: `${Math.round((weekTotals[i] / maxVal) * 100)}%` }}
+                />
+                <span className="text-[11px] text-foreground-soft">{day}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-36 items-center justify-center text-sm text-foreground-soft">
+            {t.admin_no_sales_yet}
+          </div>
+        )}
       </div>
 
       <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
