@@ -1,0 +1,176 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { ALL_PRODUCTS, MOCK_ORDERS, SALES_WEEK } from "@/lib/mockData";
+import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
+import type { MockOrder } from "@/lib/types";
+
+const STATUS_STYLES: Record<MockOrder["estado"], string> = {
+  nuevo: "bg-brand-gold/25 text-brand-gold-dark",
+  confirmado: "bg-brand-ok/20 text-brand-ok",
+  entregado: "bg-brand-pink/18 text-brand-pink-deep",
+};
+
+export default function AdminPage() {
+  const [unlocked, setUnlocked] = useState(false);
+  const [password, setPassword] = useState("");
+
+  if (!unlocked) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5 py-10">
+        <div className="rounded-3xl border border-border bg-surface p-7 text-center shadow-lg">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-pink to-brand-gold font-script text-xl text-white">
+            E
+          </div>
+          <h1 className="text-base font-semibold text-foreground">Acceso administrador</h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Contrasena"
+            className="mt-3.5 w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-center text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => setUnlocked(true)}
+            className="mt-3.5 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white hover:bg-brand-pink-dark"
+          >
+            Entrar
+          </button>
+          <Link
+            href="/"
+            className="mt-2 block w-full rounded-full border border-border py-2.5 text-sm font-medium text-foreground-soft"
+          >
+            Volver a la tienda
+          </Link>
+          <p className="mt-3 text-[11px] text-foreground-soft">
+            Vista previa — cualquier contrasena funciona. La proteccion real se conecta con el
+            backend.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const totalWeek = SALES_WEEK.reduce((sum, d) => sum + d.value, 0);
+  const newOrders = MOCK_ORDERS.filter((o) => o.estado === "nuevo").length;
+  const maxVal = Math.max(...SALES_WEEK.map((d) => d.value));
+
+  return (
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-script text-3xl text-brand-pink-deep">Panel de administrador</h1>
+        <Link
+          href="/"
+          className="rounded-full border border-border bg-surface px-4 py-2 text-xs text-foreground-soft"
+        >
+          Volver a la tienda
+        </Link>
+      </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile label="Ventas esta semana" value={money(totalWeek)} />
+        <StatTile label="Pedidos nuevos" value={String(newOrders)} />
+        <StatTile
+          label="Proxima entrega"
+          value={formatDeliveryDate(computeDeliveryFriday())}
+          small
+        />
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">Resumen de ventas semanales</h2>
+        <div className="flex h-36 items-end gap-2.5">
+          {SALES_WEEK.map((d) => (
+            <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <span className="text-[11px] tabular-nums text-foreground-soft">${d.value}</span>
+              <div
+                className="w-full max-w-[34px] rounded-t-md bg-gradient-to-t from-brand-pink to-brand-gold"
+                style={{ height: `${Math.round((d.value / maxVal) * 100)}%` }}
+              />
+              <span className="text-[11px] text-foreground-soft">{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">Pedidos</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+                <th className="border-b border-border pb-2 font-medium">ID</th>
+                <th className="border-b border-border pb-2 font-medium">Cliente</th>
+                <th className="border-b border-border pb-2 font-medium">Entrega</th>
+                <th className="border-b border-border pb-2 font-medium">Total</th>
+                <th className="border-b border-border pb-2 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOCK_ORDERS.map((order) => (
+                <tr key={order.id}>
+                  <td className="border-b border-border py-2.5 align-top">#{order.id}</td>
+                  <td className="border-b border-border py-2.5 align-top">
+                    {order.cliente}
+                    <div className="text-xs text-foreground-soft">{order.detalle}</div>
+                  </td>
+                  <td className="border-b border-border py-2.5 align-top">{order.entrega}</td>
+                  <td className="border-b border-border py-2.5 align-top tabular-nums">
+                    {money(order.total)}
+                  </td>
+                  <td className="border-b border-border py-2.5 align-top">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[order.estado]}`}
+                    >
+                      {order.estado}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">Menu &amp; Catering</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+                <th className="border-b border-border pb-2 font-medium">Articulo</th>
+                <th className="border-b border-border pb-2 font-medium">Precio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ALL_PRODUCTS.map((product) => (
+                <tr key={product.id}>
+                  <td className="border-b border-border py-2.5">{product.name}</td>
+                  <td className="border-b border-border py-2.5 tabular-nums">
+                    {money(product.price)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-[11px] text-foreground-soft">
+          Agregar articulos y numero de WhatsApp llega con la conexion a Google Sheets.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, small }: { label: string; value: string; small?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-4">
+      <div className="text-[11px] uppercase tracking-wide text-foreground-soft">{label}</div>
+      <div className={`mt-0.5 font-script text-brand-pink-deep ${small ? "text-xl" : "text-3xl"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}

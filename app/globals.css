@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fce4ec;
+  --foreground: #4a2c33;
+  --foreground-soft: #8a6270;
+  --surface: #ffffff;
+  --surface-2: #fff6f9;
+  --border: #f3c8d5;
+  --brand-pink: #f06292;
+  --brand-pink-dark: #d84f7d;
+  --brand-pink-deep: #b23764;
+  --brand-bg: #fce4ec;
+  --brand-gold: #e8b84b;
+  --brand-gold-dark: #c89530;
+  --brand-white: #ffffff;
+  --brand-ok: #4c9a6a;
+  --brand-danger: #d2483b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2a151f;
+    --foreground: #f8e3ea;
+    --foreground-soft: #d6a9b8;
+    --surface: #3a1e2b;
+    --surface-2: #442337;
+    --border: #5a2e42;
+    --brand-pink: #f4779f;
+    --brand-pink-dark: #f591b2;
+    --brand-pink-deep: #fbc4d8;
+    --brand-gold: #f0c868;
+    --brand-gold-dark: #f6d888;
+    --brand-white: #3a1e2b;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-soft: var(--foreground-soft);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-pink-dark: var(--brand-pink-dark);
+  --color-brand-pink-deep: var(--brand-pink-deep);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-dark: var(--brand-gold-dark);
+  --color-brand-white: var(--brand-white);
+  --color-brand-ok: var(--brand-ok);
+  --color-brand-danger: var(--brand-danger);
+  --font-script: var(--font-script);
+  --font-sans: var(--font-body);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
