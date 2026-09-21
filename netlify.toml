@@ -4,3 +4,16 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Hashed build assets are safe to cache forever; everything else (HTML pages,
+# RSC payload .txt files) must always be revalidated so a new deploy is never
+# masked by a stale cached page at the CDN edge or in someone's browser.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
