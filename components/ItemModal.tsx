@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
+import { useStoreConfig } from "@/context/StoreConfigContext";
 import { money } from "@/lib/delivery";
 import type { Addon, Product } from "@/lib/types";
 import Overlay from "./Overlay";
@@ -9,11 +11,17 @@ import ProductThumb from "./ProductThumb";
 
 export default function ItemModal({ product }: { product: Product }) {
   const { addLine, closeModal, openCart } = useCart();
-  const [qty, setQty] = useState(1);
+  const { t, translateProduct } = useLocale();
+  const { rules } = useStoreConfig();
+  const isBulkPriced = product.price < rules.bulkMaxPrice;
+  const minQty = isBulkPriced ? rules.bulkMinQty : 1;
+
+  const [qty, setQty] = useState(minQty);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, Addon>>({});
   const [eventDate, setEventDate] = useState("");
   const [notes, setNotes] = useState("");
 
+  const { name, description } = translateProduct(product);
   const addonsTotal = Object.values(selectedAddons).reduce((sum, a) => sum + a.price, 0);
   const subtotal = (product.price + addonsTotal) * qty;
 
@@ -46,15 +54,15 @@ export default function ItemModal({ product }: { product: Product }) {
   return (
     <Overlay onClose={closeModal}>
       <ProductThumb product={product} className="mb-3.5 h-28 rounded-2xl" />
-      <h3 className="text-lg font-semibold text-foreground">{product.name}</h3>
-      <p className="mt-1 text-sm text-foreground-soft">{product.description}</p>
+      <h3 className="text-lg font-semibold text-foreground">{name}</h3>
+      <p className="mt-1 text-sm text-foreground-soft">{description}</p>
 
       <div className="mt-3 flex items-center justify-between border-t border-border py-3">
-        <span className="text-sm">Cantidad</span>
+        <span className="text-sm">{t.quantity}</span>
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
+            onClick={() => setQty((q) => Math.max(minQty, q - 1))}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-brand-pink-deep"
           >
             −
@@ -69,6 +77,12 @@ export default function ItemModal({ product }: { product: Product }) {
           </button>
         </div>
       </div>
+
+      {isBulkPriced && (
+        <p className="text-xs text-brand-gold-dark">
+          {t.bulk_min_note(rules.bulkMinQty, rules.bulkFreeDeliveryQty)}
+        </p>
+      )}
 
       {product.addons.map((addon) => (
         <label
@@ -91,7 +105,7 @@ export default function ItemModal({ product }: { product: Product }) {
       {product.isCatering && (
         <div>
           <label htmlFor="event-date" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-            Fecha del evento
+            {t.event_date}
           </label>
           <input
             id="event-date"
@@ -104,19 +118,19 @@ export default function ItemModal({ product }: { product: Product }) {
       )}
 
       <label htmlFor="item-notes" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-        Notas (opcional)
+        {t.notes_optional}
       </label>
       <textarea
         id="item-notes"
         rows={2}
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Ej. sin nueces, mensaje en el pastel..."
+        placeholder={t.notes_placeholder}
         className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
       />
 
       <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-border pt-3.5">
-        <span className="text-sm">Subtotal</span>
+        <span className="text-sm">{t.subtotal}</span>
         <span className="font-script text-2xl tabular-nums text-brand-pink-deep">
           {money(subtotal)}
         </span>
@@ -127,14 +141,14 @@ export default function ItemModal({ product }: { product: Product }) {
         onClick={handleAdd}
         className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark"
       >
-        Agregar al carrito
+        {t.add_to_cart}
       </button>
       <button
         type="button"
         onClick={closeModal}
         className="mt-2 w-full rounded-full border border-border py-2.5 text-sm font-medium text-foreground-soft"
       >
-        Cancelar
+        {t.cancel}
       </button>
     </Overlay>
   );

@@ -1,12 +1,14 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 import { computeDeliveryFriday, formatDeliveryDate } from "@/lib/delivery";
 import Overlay from "./Overlay";
 
 export default function ConfirmationModal({ customerName }: { customerName: string }) {
   const { closeModal } = useCart();
-  const friday = formatDeliveryDate(computeDeliveryFriday());
+  const { locale, t } = useLocale();
+  const friday = formatDeliveryDate(computeDeliveryFriday(), locale);
 
   return (
     <Overlay onClose={closeModal}>
@@ -15,21 +17,18 @@ export default function ConfirmationModal({ customerName }: { customerName: stri
           ♥
         </div>
         <h3 className="text-lg font-semibold text-foreground">
-          Gracias, {customerName || "amig@"}!
+          {t.thanks_title(customerName || (locale === "en" ? "friend" : "amig@"))}
         </h3>
+        <p className="mt-2 text-sm text-foreground-soft">{t.thanks_body}</p>
         <p className="mt-2 text-sm text-foreground-soft">
-          Abrimos WhatsApp con tu pedido listo para enviar. En cuanto lo confirmes, te
-          contactaremos para coordinar el pago.
-        </p>
-        <p className="mt-2 text-sm text-foreground-soft">
-          <b className="text-foreground">Entrega estimada:</b> {friday}
+          <b className="text-foreground">{t.estimated_delivery}</b> {friday}
         </p>
         <button
           type="button"
           onClick={closeModal}
           className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark"
         >
-          Seguir explorando el menu
+          {t.keep_exploring}
         </button>
       </div>
     </Overlay>

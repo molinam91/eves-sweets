@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Poppins, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { LocaleProvider } from "@/context/LocaleContext";
+import { MenuProvider } from "@/context/MenuContext";
+import { StoreConfigProvider } from "@/context/StoreConfigContext";
 import ModalRoot from "@/components/ModalRoot";
 
 const bodyFont = Poppins({
@@ -19,20 +22,26 @@ const scriptFont = Dancing_Script({
 export const metadata: Metadata = {
   title: "Eve's Sweets — Desserts and More",
   description:
-    "Postres caseros hechos con amor. Pide tus favoritos de Eve's Sweets para entrega o recoleccion.",
+    "Homemade desserts made with love. Order your Eve's Sweets favorites for delivery or pickup.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${bodyFont.variable} ${scriptFont.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-brand-bg">
-        <CartProvider>
-          {children}
-          <ModalRoot />
-        </CartProvider>
+        <LocaleProvider>
+          <MenuProvider>
+            <StoreConfigProvider>
+              <CartProvider>
+                {children}
+                <ModalRoot />
+              </CartProvider>
+            </StoreConfigProvider>
+          </MenuProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

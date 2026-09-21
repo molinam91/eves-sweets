@@ -22,8 +22,12 @@ export function computeDeliveryFriday(reference: Date = pacificNow()): Date {
   return friday;
 }
 
-export function formatDeliveryDate(date: Date): string {
-  return date.toLocaleDateString("es-US", { weekday: "long", day: "numeric", month: "long" });
+export function formatDeliveryDate(date: Date, locale: "en" | "es" = "es"): string {
+  return date.toLocaleDateString(locale === "en" ? "en-US" : "es-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 }
 
 export function money(amount: number): string {

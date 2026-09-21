@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-
-const navLinks = [
-  { label: "Menu", href: "#menu" },
-  { label: "Catering / Eventos", href: "#catering" },
-  { label: "Contacto", href: "#contacto" },
-];
+import { useLocale } from "@/context/LocaleContext";
 
 export default function Header() {
   const { cartCount, openCart } = useCart();
+  const { locale, toggleLocale, t } = useLocale();
+
+  const navLinks = [
+    { label: t.nav_menu, href: "#menu" },
+    { label: t.nav_catering, href: "#catering" },
+    { label: t.nav_contact, href: "#contacto" },
+  ];
 
   return (
     <header className="sticky top-0 z-20 border-b border-brand-pink/20 bg-brand-white/90 backdrop-blur">
@@ -39,16 +41,26 @@ export default function Header() {
             </a>
           ))}
         </nav>
-        <button
-          type="button"
-          onClick={openCart}
-          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-brand-pink px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-pink-dark"
-        >
-          Carrito
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1 text-xs font-bold text-brand-pink-dark">
-            {cartCount}
-          </span>
-        </button>
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleLocale}
+            aria-label={t.language}
+            className="rounded-full border border-border px-2.5 py-2 text-xs font-semibold text-foreground-soft transition-colors hover:bg-brand-bg"
+          >
+            {locale === "en" ? "ES" : "EN"}
+          </button>
+          <button
+            type="button"
+            onClick={openCart}
+            className="flex items-center gap-2 rounded-full bg-brand-pink px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-pink-dark"
+          >
+            {t.cart_button}
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1 text-xs font-bold text-brand-pink-dark">
+              {cartCount}
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );

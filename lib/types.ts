@@ -45,3 +45,22 @@ export type SalesDay = {
   day: string;
   value: number;
 };
+
+export type PromoCode = {
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  active: boolean;
+};
+
+export type FulfillmentMethod = "delivery" | "pickup";
+
+export type StoreRules = {
+  /** Flat fee added at checkout for delivery orders (waived for pickup). */
+  deliveryFee: number;
+  /** Items priced under this amount require a minimum quantity per order. */
+  bulkMaxPrice: number;
+  bulkMinQty: number;
+  /** Ordering this many units of a bulk-priced item waives the delivery fee. */
+  bulkFreeDeliveryQty: number;
+};

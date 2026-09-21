@@ -2,32 +2,57 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
 import { WHATSAPP_NUMBER } from "@/lib/mockData";
 import type { PaymentMethod } from "@/lib/types";
 
-const PAY_LABELS: Record<PaymentMethod, string> = {
-  zelle: "Zelle",
-  applepay: "Apple Pay",
-  cash: "Efectivo",
+const PAY_KEYS: Record<PaymentMethod, "pay_zelle" | "pay_applepay" | "pay_cash"> = {
+  zelle: "pay_zelle",
+  applepay: "pay_applepay",
+  cash: "pay_cash",
 };
 
 export default function CheckoutModal() {
-  const { cart, lineTotal, cartTotal, hasCatering, closeModal, openCart, openConfirmation, clearCart } =
-    useCart();
+  const {
+    cart,
+    lineTotal,
+    cartTotal,
+    hasCatering,
+    closeModal,
+    openCart,
+    openConfirmation,
+    clearCart,
+    fulfillment,
+    setFulfillment,
+    appliedPromo,
+    promoError,
+    applyPromoCode,
+    clearPromoCode,
+    deliveryFeeAmount,
+    deliveryFeeWaived,
+    discountAmount,
+    orderTotal,
+  } = useCart();
+  const { locale, t } = useLocale();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [address, setAddress] = useState("");
   const [payment, setPayment] = useState<PaymentMethod>("zelle");
   const [notes, setNotes] = useState("");
   const [touched, setTouched] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
 
   const showFulfillment = !hasCatering;
-  const friday = formatDeliveryDate(computeDeliveryFriday());
+  const friday = formatDeliveryDate(computeDeliveryFriday(), locale);
   const nameError = touched && !name.trim();
   const phoneError = touched && !phone.trim();
+
+  function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    applyPromoCode(promoInput.trim());
+  }
 
   function handleSend() {
     setTouched(true);
@@ -46,13 +71,22 @@ export default function CheckoutModal() {
     if (showFulfillment) {
       if (fulfillment === "delivery") {
         lines.push(`Entrega: ${address.trim()} — ${friday}`);
+        lines.push(
+          deliveryFeeWaived || deliveryFeeAmount === 0
+            ? "Costo de entrega: gratis"
+            : `Costo de entrega: ${money(deliveryFeeAmount)}`
+        );
       } else {
         lines.push(`Recoleccion en tienda — ${friday}`);
       }
     }
-    lines.push(`Pago: ${PAY_LABELS[payment]} (te contactaremos por WhatsApp para confirmar el pago)`);
+    lines.push(`Pago: ${PAY_KEYS[payment]} (te contactaremos por WhatsApp para confirmar el pago)`);
+    if (appliedPromo) {
+      lines.push(`Codigo promocional: ${appliedPromo.code} (-${money(discountAmount)})`);
+    }
     if (notes.trim()) lines.push(`Notas: ${notes.trim()}`);
-    lines.push(`Total: ${money(cartTotal)}`);
+    lines.push(`Subtotal: ${money(cartTotal)}`);
+    lines.push(`Total: ${money(orderTotal)}`);
 
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank", "noopener");
@@ -73,46 +107,46 @@ export default function CheckoutModal() {
         <button
           type="button"
           onClick={closeModal}
-          aria-label="Cerrar"
+          aria-label="Close"
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-foreground-soft"
         >
           ✕
         </button>
 
-        <h3 className="text-lg font-semibold text-foreground">Finalizar pedido</h3>
-        <p className="mt-1 text-sm text-foreground-soft">
-          Te vamos a redirigir a WhatsApp con tu pedido listo para enviar.
-        </p>
+        <h3 className="text-lg font-semibold text-foreground">{t.checkout_title}</h3>
+        <p className="mt-1 text-sm text-foreground-soft">{t.checkout_subtitle}</p>
 
         <label htmlFor="f-name" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-          Nombre completo
+          {t.full_name}
         </label>
         <input
           id="f-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Tu nombre"
+          placeholder={t.full_name_placeholder}
           className="w-full rounded-xl border bg-surface-2 px-3 py-2.5 text-sm"
           style={{ borderColor: nameError ? "var(--brand-danger)" : "var(--border)" }}
         />
 
         <label htmlFor="f-phone" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-          Telefono
+          {t.phone}
         </label>
         <input
           id="f-phone"
           type="text"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="(555) 555-5555"
+          placeholder={t.phone_placeholder}
           className="w-full rounded-xl border bg-surface-2 px-3 py-2.5 text-sm"
           style={{ borderColor: phoneError ? "var(--brand-danger)" : "var(--border)" }}
         />
 
         {showFulfillment ? (
           <>
-            <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">Entrega</span>
+            <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
+              {t.fulfillment}
+            </span>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -123,7 +157,7 @@ export default function CheckoutModal() {
                     : "border-border bg-surface-2 text-foreground-soft"
                 }`}
               >
-                Entrega a domicilio
+                {t.delivery_option}
               </button>
               <button
                 type="button"
@@ -134,39 +168,65 @@ export default function CheckoutModal() {
                     : "border-border bg-surface-2 text-foreground-soft"
                 }`}
               >
-                Recoleccion
+                {t.pickup_option}
               </button>
             </div>
             {fulfillment === "delivery" && (
               <>
                 <label htmlFor="f-address" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-                  Direccion de entrega
+                  {t.delivery_address}
                 </label>
                 <input
                   id="f-address"
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Calle, ciudad, codigo postal"
+                  placeholder={t.address_placeholder}
                   className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
                 />
               </>
             )}
-            <p className="mt-2.5 text-xs text-foreground-soft">
-              Fecha estimada: <b className="text-foreground">{friday}</b> (segun la regla de corte
-              del miercoles 4pm).
-            </p>
+            <p className="mt-2.5 text-xs text-foreground-soft">{t.estimated_date(friday)}</p>
           </>
         ) : (
-          <p className="mt-3 text-xs text-foreground-soft">
-            Este pedido incluye articulos de catering; coordinaremos la fecha de tu evento por
-            WhatsApp.
-          </p>
+          <p className="mt-3 text-xs text-foreground-soft">{t.catering_note}</p>
         )}
 
-        <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">Metodo de pago</span>
+        <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
+          {t.promo_code}
+        </span>
+        {appliedPromo ? (
+          <div className="flex items-center justify-between rounded-xl border border-brand-pink bg-surface-2 px-3 py-2.5 text-sm">
+            <span className="font-semibold text-brand-pink-deep">{t.promo_applied(appliedPromo.code)}</span>
+            <button type="button" onClick={clearPromoCode} className="text-xs underline text-foreground-soft">
+              {t.remove}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              placeholder={t.promo_code_placeholder}
+              className="w-full flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm uppercase"
+            />
+            <button
+              type="button"
+              onClick={handleApplyPromo}
+              className="rounded-xl border border-brand-pink px-4 text-sm font-semibold text-brand-pink-deep"
+            >
+              {t.apply}
+            </button>
+          </div>
+        )}
+        {promoError && <p className="mt-1 text-xs text-brand-danger">{promoError}</p>}
+
+        <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
+          {t.payment_method}
+        </span>
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(PAY_LABELS) as PaymentMethod[]).map((method) => (
+          {(Object.keys(PAY_KEYS) as PaymentMethod[]).map((method) => (
             <label
               key={method}
               className={`min-w-[90px] flex-1 cursor-pointer rounded-xl border py-2.5 text-center text-xs font-medium ${
@@ -183,28 +243,48 @@ export default function CheckoutModal() {
                 onChange={() => setPayment(method)}
                 className="hidden"
               />
-              {PAY_LABELS[method]}
+              {t[PAY_KEYS[method]]}
             </label>
           ))}
         </div>
 
         <label htmlFor="f-notes" className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
-          Notas adicionales (opcional)
+          {t.additional_notes}
         </label>
         <textarea
           id="f-notes"
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Instrucciones especiales..."
+          placeholder={t.additional_notes_placeholder}
           className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
         />
 
-        <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-border pt-3.5">
-          <span className="text-sm">Total del pedido</span>
-          <span className="font-script text-2xl tabular-nums text-brand-pink-deep">
-            {money(cartTotal)}
-          </span>
+        <div className="mt-4 space-y-1.5 border-t border-dashed border-border pt-3.5">
+          <div className="flex items-baseline justify-between text-sm text-foreground-soft">
+            <span>{t.subtotal}</span>
+            <span className="tabular-nums">{money(cartTotal)}</span>
+          </div>
+          {showFulfillment && fulfillment === "delivery" && (
+            <div className="flex items-baseline justify-between text-sm text-foreground-soft">
+              <span>{t.delivery_fee_label}</span>
+              <span className="tabular-nums">
+                {deliveryFeeAmount === 0 ? t.delivery_fee_waived : money(deliveryFeeAmount)}
+              </span>
+            </div>
+          )}
+          {appliedPromo && (
+            <div className="flex items-baseline justify-between text-sm text-brand-pink-deep">
+              <span>{t.discount_label}</span>
+              <span className="tabular-nums">-{money(discountAmount)}</span>
+            </div>
+          )}
+          <div className="flex items-baseline justify-between pt-1">
+            <span className="text-sm">{t.order_total}</span>
+            <span className="font-script text-2xl tabular-nums text-brand-pink-deep">
+              {money(orderTotal)}
+            </span>
+          </div>
         </div>
 
         <button
@@ -212,7 +292,7 @@ export default function CheckoutModal() {
           onClick={handleSend}
           className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark"
         >
-          Enviar pedido por WhatsApp
+          {t.send_whatsapp}
         </button>
         <button
           type="button"
@@ -222,7 +302,7 @@ export default function CheckoutModal() {
           }}
           className="mt-2 w-full rounded-full border border-border py-2.5 text-sm font-medium text-foreground-soft"
         >
-          Volver al carrito
+          {t.back_to_cart}
         </button>
       </div>
     </div>

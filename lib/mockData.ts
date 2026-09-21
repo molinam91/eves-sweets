@@ -2,9 +2,11 @@ import type { MockOrder, Product, SalesDay } from "./types";
 
 export const WHATSAPP_NUMBER = "15555555555"; // placeholder -- Jayro to provide the real business number
 
-// Real items from Jayro's flyers (2026-09-21). Prices are NOT on the flyers --
-// the numbers below are placeholders until he sends real prices.
-export const MENU: Product[] = [
+// Seed data for the menu/catering store (see context/MenuContext.tsx). Real
+// items from Jayro's flyers (2026-09-21); prices are NOT on the flyers -- the
+// numbers below are placeholders. Jayro manages the live catalog from
+// /admin, which persists on top of this seed.
+export const DEFAULT_MENU: Product[] = [
   {
     id: "chocoflan",
     name: "Chocoflan",
@@ -66,7 +68,7 @@ export const MENU: Product[] = [
   },
 ];
 
-export const CATERING: Product[] = [
+export const DEFAULT_CATERING: Product[] = [
   {
     id: "mesa-postres",
     name: "Mesa de Postres (20 personas)",
@@ -99,12 +101,6 @@ export const CATERING: Product[] = [
   },
 ];
 
-export const ALL_PRODUCTS: Product[] = [...MENU, ...CATERING];
-
-export function findProduct(id: string): Product | undefined {
-  return ALL_PRODUCTS.find((p) => p.id === id);
-}
-
 export const CAROUSEL_SLIDES: { caption: string; gradient: [string, string] }[] = [
   { caption: "Hecho fresco cada semana", gradient: ["#F06292", "#E8B84B"] },
   { caption: "Entregas los viernes", gradient: ["#E8B84B", "#D84F7D"] },
@@ -127,4 +123,14 @@ export const SALES_WEEK: SalesDay[] = [
   { day: "Vie", value: 610 },
   { day: "Sab", value: 75 },
   { day: "Dom", value: 40 },
+];
+
+// Brand-color options for items added from /admin without a photo yet.
+export const GRADIENT_PRESETS: [string, string][] = [
+  ["#F06292", "#E8B84B"],
+  ["#E8B84B", "#F06292"],
+  ["#D84F7D", "#F06292"],
+  ["#F06292", "#D84F7D"],
+  ["#B23764", "#E8B84B"],
+  ["#E8B84B", "#B23764"],
 ];
