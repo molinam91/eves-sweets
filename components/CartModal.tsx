@@ -3,6 +3,7 @@
 import { useCart } from "@/context/CartContext";
 import { money } from "@/lib/delivery";
 import Overlay from "./Overlay";
+import ProductThumb from "./ProductThumb";
 
 export default function CartModal() {
   const { cart, removeLine, lineTotal, cartTotal, closeModal, openCheckout } = useCart();
@@ -19,12 +20,11 @@ export default function CartModal() {
         <div className="mt-2">
           {cart.map((line) => (
             <div key={line.cartId} className="flex gap-3 border-t border-border py-3 first:border-t-0">
-              <div
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-white"
-                style={{ background: `linear-gradient(135deg, ${line.gradient[0]}, ${line.gradient[1]})` }}
-              >
-                🧁
-              </div>
+              <ProductThumb
+                product={line}
+                className="h-11 w-11 flex-shrink-0 rounded-xl"
+                sizes="44px"
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">
                   {line.qty}x {line.name}

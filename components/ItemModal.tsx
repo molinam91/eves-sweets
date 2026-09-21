@@ -5,6 +5,7 @@ import { useCart } from "@/context/CartContext";
 import { money } from "@/lib/delivery";
 import type { Addon, Product } from "@/lib/types";
 import Overlay from "./Overlay";
+import ProductThumb from "./ProductThumb";
 
 export default function ItemModal({ product }: { product: Product }) {
   const { addLine, closeModal, openCart } = useCart();
@@ -36,6 +37,7 @@ export default function ItemModal({ product }: { product: Product }) {
       isCatering: product.isCatering,
       eventDate,
       gradient: product.gradient,
+      photo: product.photo,
     });
     closeModal();
     openCart();
@@ -43,12 +45,7 @@ export default function ItemModal({ product }: { product: Product }) {
 
   return (
     <Overlay onClose={closeModal}>
-      <div
-        className="mb-3.5 flex h-28 items-center justify-center rounded-2xl text-3xl text-white"
-        style={{ background: `linear-gradient(135deg, ${product.gradient[0]}, ${product.gradient[1]})` }}
-      >
-        🧁
-      </div>
+      <ProductThumb product={product} className="mb-3.5 h-28 rounded-2xl" />
       <h3 className="text-lg font-semibold text-foreground">{product.name}</h3>
       <p className="mt-1 text-sm text-foreground-soft">{product.description}</p>
 

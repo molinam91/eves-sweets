@@ -10,6 +10,8 @@ export type Product = {
   description: string;
   price: number;
   gradient: [string, string];
+  /** Real product photo path (public/). Falls back to the gradient tile when absent. */
+  photo?: string;
   addons: Addon[];
   isCatering: boolean;
 };
@@ -25,6 +27,7 @@ export type CartLine = {
   isCatering: boolean;
   eventDate: string;
   gradient: [string, string];
+  photo?: string;
 };
 
 export type PaymentMethod = "zelle" | "applepay" | "cash";
