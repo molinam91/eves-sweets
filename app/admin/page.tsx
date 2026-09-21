@@ -1,0 +1,419 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import OrderDetailModal from "@/components/admin/OrderDetailModal";
+import ProductFormModal from "@/components/admin/ProductFormModal";
+import PromoFormModal from "@/components/admin/PromoFormModal";
+import StoreRulesForm from "@/components/admin/StoreRulesForm";
+import { useLocale } from "@/context/LocaleContext";
+import { useMenu } from "@/context/MenuContext";
+import { useOrders } from "@/context/OrderContext";
+import { useStoreConfig } from "@/context/StoreConfigContext";
+import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
+import { SALES_WEEK } from "@/lib/mockData";
+import type { Order, Product, PromoCode } from "@/lib/types";
+
+export default function AdminPage() {
+  const { locale, t, toggleLocale } = useLocale();
+  const [unlocked, setUnlocked] = useState(false);
+  const [password, setPassword] = useState("");
+
+  if (!unlocked) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5 py-10">
+        <div className="rounded-3xl border border-border bg-surface p-7 text-center shadow-lg">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-pink to-brand-gold font-script text-xl text-white">
+            E
+          </div>
+          <h1 className="text-base font-semibold text-foreground">{t.admin_access}</h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t.admin_password_placeholder}
+            className="mt-3.5 w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-center text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => setUnlocked(true)}
+            className="mt-3.5 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white hover:bg-brand-pink-dark"
+          >
+            {t.admin_enter}
+          </button>
+          <Link
+            href="/"
+            className="mt-2 block w-full rounded-full border border-border py-2.5 text-sm font-medium text-foreground-soft"
+          >
+            {t.back_to_store}
+          </Link>
+          <button
+            type="button"
+            onClick={toggleLocale}
+            className="mt-3 text-[11px] text-foreground-soft underline"
+          >
+            {t.language}: {locale === "en" ? "English" : "Espanol"}
+          </button>
+          <p className="mt-3 text-[11px] text-foreground-soft">{t.admin_hint}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
+  const { locale, t, toggleLocale } = useLocale();
+  const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
+  const { promoCodes, deletePromoCode } = useStoreConfig();
+  const { orders, completeOrder } = useOrders();
+
+  const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
+    null
+  );
+  const [promoModal, setPromoModal] = useState<{ promo?: PromoCode } | null>(null);
+  const [orderDetail, setOrderDetail] = useState<Order | null>(null);
+
+  const totalWeek = SALES_WEEK.reduce((sum, d) => sum + d.value, 0);
+  const maxVal = Math.max(...SALES_WEEK.map((d) => d.value));
+
+  function handleDeleteProduct(product: Product) {
+    if (window.confirm(`${t.admin_delete} "${product.name}"?`)) {
+      deleteProduct(product.id);
+    }
+  }
+
+  function handleDeletePromo(promo: PromoCode) {
+    if (window.confirm(`${t.admin_delete} "${promo.code}"?`)) {
+      deletePromoCode(promo.code);
+    }
+  }
+
+  function handleReset() {
+    if (window.confirm(t.admin_reset + "?")) {
+      resetToDefaults();
+    }
+  }
+
+  function handleCompleteOrder(order: Order) {
+    completeOrder(order.id);
+    setOrderDetail(null);
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-script text-3xl text-brand-pink-deep">{t.admin_panel_title}</h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleLocale}
+            className="rounded-full border border-border bg-surface px-4 py-2 text-xs text-foreground-soft"
+          >
+            {locale === "en" ? "ES" : "EN"}
+          </button>
+          <Link
+            href="/"
+            className="rounded-full border border-border bg-surface px-4 py-2 text-xs text-foreground-soft"
+          >
+            {t.back_to_store}
+          </Link>
+        </div>
+      </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile label={t.admin_sales_week} value={money(totalWeek)} />
+        <StatTile label={t.admin_new_orders} value={String(orders.length)} />
+        <StatTile
+          label={t.admin_next_delivery}
+          value={formatDeliveryDate(computeDeliveryFriday(), locale)}
+          small
+        />
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_weekly_summary}</h2>
+        <div className="flex h-36 items-end gap-2.5">
+          {SALES_WEEK.map((d) => (
+            <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <span className="text-[11px] tabular-nums text-foreground-soft">${d.value}</span>
+              <div
+                className="w-full max-w-[34px] rounded-t-md bg-gradient-to-t from-brand-pink to-brand-gold"
+                style={{ height: `${Math.round((d.value / maxVal) * 100)}%` }}
+              />
+              <span className="text-[11px] text-foreground-soft">{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_orders}</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+                <th className="border-b border-border pb-2 font-medium">ID</th>
+                <th className="border-b border-border pb-2 font-medium">Cliente</th>
+                <th className="border-b border-border pb-2 font-medium">Entrega</th>
+                <th className="border-b border-border pb-2 font-medium">Total</th>
+                <th className="border-b border-border pb-2 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td className="border-b border-border py-2.5 align-top">#{order.id}</td>
+                  <td className="border-b border-border py-2.5 align-top">
+                    <button
+                      type="button"
+                      onClick={() => setOrderDetail(order)}
+                      className="text-left font-semibold text-brand-pink-deep underline"
+                    >
+                      {order.customerName}
+                    </button>
+                    <div className="text-xs text-foreground-soft">
+                      {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                    </div>
+                  </td>
+                  <td className="border-b border-border py-2.5 align-top">
+                    {order.hasCatering
+                      ? "Catering"
+                      : order.fulfillment === "delivery"
+                        ? order.address
+                        : "Recoleccion en tienda"}
+                  </td>
+                  <td className="border-b border-border py-2.5 align-top tabular-nums">
+                    {money(order.total)}
+                  </td>
+                  <td className="border-b border-border py-2.5 align-top text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleCompleteOrder(order)}
+                      className="text-xs underline text-foreground-soft"
+                    >
+                      Completar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center text-xs text-foreground-soft">
+                    Sin pedidos nuevos todavia.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ProductSection
+        title={t.nav_menu}
+        category="menu"
+        products={menu}
+        t={t}
+        onAdd={() => setProductModal({ category: "menu" })}
+        onEdit={(p) => setProductModal({ category: "menu", product: p })}
+        onDelete={handleDeleteProduct}
+      />
+
+      <ProductSection
+        title={t.nav_catering}
+        category="catering"
+        products={catering}
+        t={t}
+        onAdd={() => setProductModal({ category: "catering" })}
+        onEdit={(p) => setProductModal({ category: "catering", product: p })}
+        onDelete={handleDeleteProduct}
+      />
+
+      <div className="mb-5 flex justify-end">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="rounded-full border border-border bg-surface px-4 py-2 text-xs text-foreground-soft"
+        >
+          {t.admin_reset}
+        </button>
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <div className="mb-3.5 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">{t.admin_promo_codes}</h2>
+          <button
+            type="button"
+            onClick={() => setPromoModal({})}
+            className="rounded-full bg-brand-pink px-4 py-2 text-xs font-semibold text-white"
+          >
+            {t.admin_add_code}
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+                <th className="border-b border-border pb-2 font-medium">{t.admin_code}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_discount}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_status}</th>
+                <th className="border-b border-border pb-2 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              {promoCodes.map((promo) => (
+                <tr key={promo.code}>
+                  <td className="border-b border-border py-2.5 font-semibold">{promo.code}</td>
+                  <td className="border-b border-border py-2.5 tabular-nums">
+                    {promo.type === "percent" ? `${promo.value}%` : money(promo.value)}
+                  </td>
+                  <td className="border-b border-border py-2.5">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                        promo.active
+                          ? "bg-brand-ok/20 text-brand-ok"
+                          : "bg-foreground-soft/15 text-foreground-soft"
+                      }`}
+                    >
+                      {promo.active ? t.admin_active : t.admin_inactive}
+                    </span>
+                  </td>
+                  <td className="border-b border-border py-2.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setPromoModal({ promo })}
+                      className="mr-3 text-xs underline text-foreground-soft"
+                    >
+                      {t.admin_edit}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePromo(promo)}
+                      className="text-xs underline text-brand-danger"
+                    >
+                      {t.admin_delete}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {promoCodes.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-xs text-foreground-soft">
+                    —
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_settings}</h2>
+        <StoreRulesForm />
+      </div>
+
+      {productModal && (
+        <ProductFormModal
+          category={productModal.category}
+          product={productModal.product}
+          onClose={() => setProductModal(null)}
+        />
+      )}
+      {promoModal && <PromoFormModal promo={promoModal.promo} onClose={() => setPromoModal(null)} />}
+      {orderDetail && (
+        <OrderDetailModal
+          order={orderDetail}
+          onClose={() => setOrderDetail(null)}
+          onComplete={() => handleCompleteOrder(orderDetail)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProductSection({
+  title,
+  products,
+  t,
+  onAdd,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  category: "menu" | "catering";
+  products: Product[];
+  t: ReturnType<typeof useLocale>["t"];
+  onAdd: () => void;
+  onEdit: (p: Product) => void;
+  onDelete: (p: Product) => void;
+}) {
+  return (
+    <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+      <div className="mb-3.5 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="rounded-full bg-brand-pink px-4 py-2 text-xs font-semibold text-white"
+        >
+          {t.admin_add_item}
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+              <th className="border-b border-border pb-2 font-medium">{t.admin_item}</th>
+              <th className="border-b border-border pb-2 font-medium">{t.admin_price}</th>
+              <th className="border-b border-border pb-2 font-medium" />
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id}>
+                <td className="border-b border-border py-2.5">{product.name}</td>
+                <td className="border-b border-border py-2.5 tabular-nums">{money(product.price)}</td>
+                <td className="border-b border-border py-2.5 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(product)}
+                    className="mr-3 text-xs underline text-foreground-soft"
+                  >
+                    {t.admin_edit}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(product)}
+                    className="text-xs underline text-brand-danger"
+                  >
+                    {t.admin_delete}
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={3} className="py-4 text-center text-xs text-foreground-soft">
+                  —
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, small }: { label: string; value: string; small?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-4">
+      <div className="text-[11px] uppercase tracking-wide text-foreground-soft">{label}</div>
+      <div className={`mt-0.5 font-script text-brand-pink-deep ${small ? "text-xl" : "text-3xl"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
