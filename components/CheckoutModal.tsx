@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { useOrders } from "@/context/OrderContext";
 import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
 import { WHATSAPP_NUMBER } from "@/lib/mockData";
 import type { PaymentMethod } from "@/lib/types";
@@ -35,6 +36,7 @@ export default function CheckoutModal() {
     orderTotal,
   } = useCart();
   const { locale, t } = useLocale();
+  const { addOrder } = useOrders();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -90,6 +92,31 @@ export default function CheckoutModal() {
 
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank", "noopener");
+
+    addOrder({
+      customerName: name.trim(),
+      customerPhone: phone.trim(),
+      fulfillment,
+      hasCatering,
+      address: showFulfillment && fulfillment === "delivery" ? address.trim() : "",
+      deliveryLabel: friday,
+      paymentMethod: payment,
+      notes: notes.trim(),
+      promoCode: appliedPromo?.code ?? null,
+      items: cart.map((line) => ({
+        name: line.name,
+        qty: line.qty,
+        unitPrice: line.unitPrice,
+        addons: line.addons,
+        isCatering: line.isCatering,
+        eventDate: line.eventDate,
+        lineTotal: lineTotal(line),
+      })),
+      subtotal: cartTotal,
+      discount: discountAmount,
+      deliveryFee: deliveryFeeAmount,
+      total: orderTotal,
+    });
 
     const customerName = name.trim();
     clearCart();

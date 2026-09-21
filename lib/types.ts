@@ -32,13 +32,36 @@ export type CartLine = {
 
 export type PaymentMethod = "zelle" | "applepay" | "cash";
 
-export type MockOrder = {
+export type OrderStatus = "new" | "completed";
+
+export type OrderLineSnapshot = {
+  name: string;
+  qty: number;
+  unitPrice: number;
+  addons: Addon[];
+  isCatering: boolean;
+  eventDate: string;
+  lineTotal: number;
+};
+
+export type Order = {
   id: string;
-  cliente: string;
-  detalle: string;
-  entrega: string;
+  createdAt: string;
+  customerName: string;
+  customerPhone: string;
+  fulfillment: FulfillmentMethod;
+  hasCatering: boolean;
+  address: string;
+  deliveryLabel: string;
+  paymentMethod: PaymentMethod;
+  notes: string;
+  promoCode: string | null;
+  items: OrderLineSnapshot[];
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
   total: number;
-  estado: "nuevo" | "confirmado" | "entregado";
+  status: OrderStatus;
 };
 
 export type SalesDay = {

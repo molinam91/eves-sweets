@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { MenuProvider } from "@/context/MenuContext";
+import { OrderProvider } from "@/context/OrderContext";
 import { StoreConfigProvider } from "@/context/StoreConfigContext";
 import ModalRoot from "@/components/ModalRoot";
 
@@ -35,10 +36,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LocaleProvider>
           <MenuProvider>
             <StoreConfigProvider>
-              <CartProvider>
-                {children}
-                <ModalRoot />
-              </CartProvider>
+              <OrderProvider>
+                <CartProvider>
+                  {children}
+                  <ModalRoot />
+                </CartProvider>
+              </OrderProvider>
             </StoreConfigProvider>
           </MenuProvider>
         </LocaleProvider>

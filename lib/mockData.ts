@@ -1,4 +1,4 @@
-import type { MockOrder, Product, SalesDay } from "./types";
+import type { Product, SalesDay } from "./types";
 
 export const WHATSAPP_NUMBER = "15555555555"; // placeholder -- Jayro to provide the real business number
 
@@ -105,14 +105,6 @@ export const CAROUSEL_SLIDES: { caption: string; gradient: [string, string] }[] 
   { caption: "Hecho fresco cada semana", gradient: ["#F06292", "#E8B84B"] },
   { caption: "Entregas los viernes", gradient: ["#E8B84B", "#D84F7D"] },
   { caption: "Pedidos para eventos y catering", gradient: ["#D84F7D", "#F06292"] },
-];
-
-export const MOCK_ORDERS: MockOrder[] = [
-  { id: "0007", cliente: "Marisol Vega", detalle: "1x Chocoflan, 2x Gelatina de Vainilla", entrega: "941 Hill St, Belmont, CA", total: 47, estado: "nuevo" },
-  { id: "0006", cliente: "Jonathan Reyes", detalle: "2x Arroz con Leche", entrega: "Recoleccion en tienda", total: 14, estado: "confirmado" },
-  { id: "0005", cliente: "Priya Shah", detalle: "1x Mesa de Postres (20p)", entrega: "Evento - 2026-10-03", total: 205, estado: "confirmado" },
-  { id: "0004", cliente: "Diego Ramirez", detalle: "1x Fresaflan, 1x Pan de Banana", entrega: "218 Ralston Ave, San Mateo, CA", total: 40, estado: "entregado" },
-  { id: "0003", cliente: "Amanda Cole", detalle: "3x Gelatina Mosaico", entrega: "Recoleccion en tienda", total: 21, estado: "entregado" },
 ];
 
 export const SALES_WEEK: SalesDay[] = [

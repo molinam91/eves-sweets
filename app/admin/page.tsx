@@ -2,21 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import OrderDetailModal from "@/components/admin/OrderDetailModal";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import PromoFormModal from "@/components/admin/PromoFormModal";
 import StoreRulesForm from "@/components/admin/StoreRulesForm";
 import { useLocale } from "@/context/LocaleContext";
 import { useMenu } from "@/context/MenuContext";
+import { useOrders } from "@/context/OrderContext";
 import { useStoreConfig } from "@/context/StoreConfigContext";
 import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
-import { MOCK_ORDERS, SALES_WEEK } from "@/lib/mockData";
-import type { MockOrder, Product, PromoCode } from "@/lib/types";
-
-const STATUS_STYLES: Record<MockOrder["estado"], string> = {
-  nuevo: "bg-brand-gold/25 text-brand-gold-dark",
-  confirmado: "bg-brand-ok/20 text-brand-ok",
-  entregado: "bg-brand-pink/18 text-brand-pink-deep",
-};
+import { SALES_WEEK } from "@/lib/mockData";
+import type { Order, Product, PromoCode } from "@/lib/types";
 
 export default function AdminPage() {
   const { locale, t, toggleLocale } = useLocale();
@@ -71,14 +67,15 @@ function AdminDashboard() {
   const { locale, t, toggleLocale } = useLocale();
   const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
   const { promoCodes, deletePromoCode } = useStoreConfig();
+  const { orders, completeOrder } = useOrders();
 
   const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
     null
   );
   const [promoModal, setPromoModal] = useState<{ promo?: PromoCode } | null>(null);
+  const [orderDetail, setOrderDetail] = useState<Order | null>(null);
 
   const totalWeek = SALES_WEEK.reduce((sum, d) => sum + d.value, 0);
-  const newOrders = MOCK_ORDERS.filter((o) => o.estado === "nuevo").length;
   const maxVal = Math.max(...SALES_WEEK.map((d) => d.value));
 
   function handleDeleteProduct(product: Product) {
@@ -97,6 +94,11 @@ function AdminDashboard() {
     if (window.confirm(t.admin_reset + "?")) {
       resetToDefaults();
     }
+  }
+
+  function handleCompleteOrder(order: Order) {
+    completeOrder(order.id);
+    setOrderDetail(null);
   }
 
   return (
@@ -122,7 +124,7 @@ function AdminDashboard() {
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile label={t.admin_sales_week} value={money(totalWeek)} />
-        <StatTile label={t.admin_new_orders} value={String(newOrders)} />
+        <StatTile label={t.admin_new_orders} value={String(orders.length)} />
         <StatTile
           label={t.admin_next_delivery}
           value={formatDeliveryDate(computeDeliveryFriday(), locale)}
@@ -156,30 +158,53 @@ function AdminDashboard() {
                 <th className="border-b border-border pb-2 font-medium">Cliente</th>
                 <th className="border-b border-border pb-2 font-medium">Entrega</th>
                 <th className="border-b border-border pb-2 font-medium">Total</th>
-                <th className="border-b border-border pb-2 font-medium">Estado</th>
+                <th className="border-b border-border pb-2 font-medium" />
               </tr>
             </thead>
             <tbody>
-              {MOCK_ORDERS.map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id}>
                   <td className="border-b border-border py-2.5 align-top">#{order.id}</td>
                   <td className="border-b border-border py-2.5 align-top">
-                    {order.cliente}
-                    <div className="text-xs text-foreground-soft">{order.detalle}</div>
+                    <button
+                      type="button"
+                      onClick={() => setOrderDetail(order)}
+                      className="text-left font-semibold text-brand-pink-deep underline"
+                    >
+                      {order.customerName}
+                    </button>
+                    <div className="text-xs text-foreground-soft">
+                      {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                    </div>
                   </td>
-                  <td className="border-b border-border py-2.5 align-top">{order.entrega}</td>
+                  <td className="border-b border-border py-2.5 align-top">
+                    {order.hasCatering
+                      ? "Catering"
+                      : order.fulfillment === "delivery"
+                        ? order.address
+                        : "Recoleccion en tienda"}
+                  </td>
                   <td className="border-b border-border py-2.5 align-top tabular-nums">
                     {money(order.total)}
                   </td>
-                  <td className="border-b border-border py-2.5 align-top">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[order.estado]}`}
+                  <td className="border-b border-border py-2.5 align-top text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleCompleteOrder(order)}
+                      className="text-xs underline text-foreground-soft"
                     >
-                      {order.estado}
-                    </span>
+                      Completar
+                    </button>
                   </td>
                 </tr>
               ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center text-xs text-foreground-soft">
+                    Sin pedidos nuevos todavia.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -297,6 +322,13 @@ function AdminDashboard() {
         />
       )}
       {promoModal && <PromoFormModal promo={promoModal.promo} onClose={() => setPromoModal(null)} />}
+      {orderDetail && (
+        <OrderDetailModal
+          order={orderDetail}
+          onClose={() => setOrderDetail(null)}
+          onComplete={() => handleCompleteOrder(orderDetail)}
+        />
+      )}
     </div>
   );
 }

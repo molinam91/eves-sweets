@@ -4,7 +4,8 @@ import { useState } from "react";
 import Overlay from "@/components/Overlay";
 import { GRADIENT_PRESETS } from "@/lib/mockData";
 import { useMenu, type ProductInput } from "@/context/MenuContext";
-import type { Product } from "@/lib/types";
+import { uniqueSlug } from "@/lib/slug";
+import type { Addon, Product } from "@/lib/types";
 
 function gradientIndex(gradient: [string, string]): number {
   const idx = GRADIENT_PRESETS.findIndex((g) => g[0] === gradient[0] && g[1] === gradient[1]);
@@ -27,7 +28,24 @@ export default function ProductFormModal({
   const [description, setDescription] = useState(product?.description ?? "");
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [colorIdx, setColorIdx] = useState(product ? gradientIndex(product.gradient) : 0);
+  const [addons, setAddons] = useState<Addon[]>(product?.addons ?? []);
+  const [addonName, setAddonName] = useState("");
+  const [addonPrice, setAddonPrice] = useState("");
   const [error, setError] = useState("");
+
+  function handleAddAddon() {
+    const trimmedName = addonName.trim();
+    const parsedPrice = Number(addonPrice);
+    if (!trimmedName || !Number.isFinite(parsedPrice) || parsedPrice < 0) return;
+    const id = uniqueSlug(trimmedName, addons.map((a) => a.id));
+    setAddons((prev) => [...prev, { id, name: trimmedName, price: parsedPrice }]);
+    setAddonName("");
+    setAddonPrice("");
+  }
+
+  function handleRemoveAddon(id: string) {
+    setAddons((prev) => prev.filter((a) => a.id !== id));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +67,7 @@ export default function ProductFormModal({
       price: parsedPrice,
       gradient: GRADIENT_PRESETS[colorIdx],
       isCatering: category === "catering",
+      addons,
     };
 
     if (isEdit && product) {
@@ -132,6 +151,57 @@ export default function ProductFormModal({
             Este articulo ya tiene una foto real; se conserva aunque cambies el color.
           </p>
         )}
+
+        <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
+          Toppings / extras (opcional)
+        </span>
+        {addons.length > 0 && (
+          <div className="mb-2 space-y-1.5">
+            {addons.map((addon) => (
+              <div
+                key={addon.id}
+                className="flex items-center justify-between rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm"
+              >
+                <span>{addon.name}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="tabular-nums text-foreground-soft">+${addon.price.toFixed(2)}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAddon(addon.id)}
+                    className="text-xs underline text-brand-danger"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={addonName}
+            onChange={(e) => setAddonName(e.target.value)}
+            placeholder="Ej. Chispas de chocolate"
+            className="w-full flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
+          />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={addonPrice}
+            onChange={(e) => setAddonPrice(e.target.value)}
+            placeholder="0.00"
+            className="w-24 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
+          />
+          <button
+            type="button"
+            onClick={handleAddAddon}
+            className="rounded-xl border border-brand-pink px-4 text-sm font-semibold text-brand-pink-deep"
+          >
+            Agregar
+          </button>
+        </div>
 
         {error && <p className="mt-3 text-xs text-brand-danger">{error}</p>}
 

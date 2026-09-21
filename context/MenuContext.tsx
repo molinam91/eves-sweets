@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_CATERING, DEFAULT_MENU } from "@/lib/mockData";
 import { uniqueSlug } from "@/lib/slug";
-import type { Product } from "@/lib/types";
+import type { Addon, Product } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-menu-v1";
 
@@ -13,6 +13,7 @@ export type ProductInput = {
   price: number;
   gradient: [string, string];
   isCatering: boolean;
+  addons: Addon[];
 };
 
 type MenuContextValue = {
@@ -57,7 +58,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     let created!: Product;
     setProducts((prev) => {
       const id = uniqueSlug(input.name, prev.map((p) => p.id));
-      created = { id, addons: [], ...input };
+      created = { id, ...input };
       return [...prev, created];
     });
     return created;
