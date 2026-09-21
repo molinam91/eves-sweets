@@ -71,6 +71,7 @@ type UIStrings = {
   admin_new_orders: string;
   admin_next_delivery: string;
   admin_weekly_summary: string;
+  admin_no_sales_yet: string;
   admin_orders: string;
   admin_menu_catering: string;
   admin_add_item: string;
@@ -177,6 +178,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_new_orders: "New orders",
     admin_next_delivery: "Next delivery",
     admin_weekly_summary: "Weekly sales summary",
+    admin_no_sales_yet: "No sales yet this week.",
     admin_orders: "Orders",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Add item",
@@ -282,6 +284,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_new_orders: "Pedidos nuevos",
     admin_next_delivery: "Proxima entrega",
     admin_weekly_summary: "Resumen de ventas semanales",
+    admin_no_sales_yet: "Todavia no hay ventas esta semana.",
     admin_orders: "Pedidos",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Agregar articulo",

@@ -64,11 +64,6 @@ export type Order = {
   status: OrderStatus;
 };
 
-export type SalesDay = {
-  day: string;
-  value: number;
-};
-
 export type PromoCode = {
   code: string;
   type: "percent" | "fixed";
@@ -86,4 +81,6 @@ export type StoreRules = {
   bulkMinQty: number;
   /** Ordering this many units of a bulk-priced item waives the delivery fee. */
   bulkFreeDeliveryQty: number;
+  /** WhatsApp numbers orders can go to. Index 0 is the primary number used at checkout; the rest are extras. */
+  whatsappNumbers: string[];
 };

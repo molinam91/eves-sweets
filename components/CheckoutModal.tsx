@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { useOrders } from "@/context/OrderContext";
+import { useStoreConfig } from "@/context/StoreConfigContext";
 import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
-import { WHATSAPP_NUMBER } from "@/lib/mockData";
 import type { PaymentMethod } from "@/lib/types";
 
 const PAY_KEYS: Record<PaymentMethod, "pay_zelle" | "pay_applepay" | "pay_cash"> = {
@@ -37,6 +37,7 @@ export default function CheckoutModal() {
   } = useCart();
   const { locale, t } = useLocale();
   const { addOrder } = useOrders();
+  const { rules } = useStoreConfig();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -90,7 +91,7 @@ export default function CheckoutModal() {
     lines.push(`Subtotal: ${money(cartTotal)}`);
     lines.push(`Total: ${money(orderTotal)}`);
 
-    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
+    const waUrl = `https://wa.me/${rules.whatsappNumbers[0]}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank", "noopener");
 
     addOrder({

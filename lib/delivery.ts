@@ -33,3 +33,13 @@ export function formatDeliveryDate(date: Date, locale: "en" | "es" = "es"): stri
 export function money(amount: number): string {
   return "$" + amount.toFixed(2);
 }
+
+/** A Date whose getDay/getDate/etc reflect the Pacific wall-clock moment of an ISO instant. */
+export function toPacificDate(isoString: string): Date {
+  return new Date(new Date(isoString).toLocaleString("en-US", { timeZone: PACIFIC_TZ }));
+}
+
+/** 0 = Monday ... 6 = Sunday, from a Pacific-shifted Date's getDay() (0 Sun...6 Sat). */
+export function mondayFirstIndex(date: Date): number {
+  return (date.getDay() + 6) % 7;
+}

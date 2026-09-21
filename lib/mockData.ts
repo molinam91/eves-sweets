@@ -1,6 +1,4 @@
-import type { Product, SalesDay } from "./types";
-
-export const WHATSAPP_NUMBER = "15555555555"; // placeholder -- Jayro to provide the real business number
+import type { Product } from "./types";
 
 // Seed data for the menu/catering store (see context/MenuContext.tsx). Real
 // items from Jayro's flyers (2026-09-21); prices are NOT on the flyers -- the
@@ -105,16 +103,6 @@ export const CAROUSEL_SLIDES: { caption: string; gradient: [string, string] }[] 
   { caption: "Hecho fresco cada semana", gradient: ["#F06292", "#E8B84B"] },
   { caption: "Entregas los viernes", gradient: ["#E8B84B", "#D84F7D"] },
   { caption: "Pedidos para eventos y catering", gradient: ["#D84F7D", "#F06292"] },
-];
-
-export const SALES_WEEK: SalesDay[] = [
-  { day: "Lun", value: 120 },
-  { day: "Mar", value: 180 },
-  { day: "Mie", value: 340 },
-  { day: "Jue", value: 90 },
-  { day: "Vie", value: 610 },
-  { day: "Sab", value: 75 },
-  { day: "Dom", value: 40 },
 ];
 
 // Brand-color options for items added from /admin without a photo yet.
