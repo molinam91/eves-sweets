@@ -117,7 +117,20 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       if (cancelled || !snapshot) return;
       setAllOrders((prev) => {
         const backendIds = new Set(snapshot.orders.map((o) => o.id));
-        const localOnly = prev.filter((o) => !backendIds.has(o.id));
+        const now = Date.now();
+        // A local-only order (not yet seen in a backend snapshot) is kept only for a
+        // little longer than one poll cycle -- addOrder already reconciles its own
+        // order's id as soon as the save confirms, so this window is just to bridge a
+        // poll landing mid-save. Any local-only order older than that is presumed to be
+        // stale/orphaned (a leftover from a past bug, a deleted order, one that never
+        // actually saved, etc) and dropped -- otherwise, since it can never match a real
+        // backend id, it would get kept and re-added on every single poll forever, which
+        // is what made a device's already-corrupted local cache duplicate indefinitely.
+        const localOnly = prev.filter((o) => {
+          if (backendIds.has(o.id)) return false;
+          const age = now - new Date(o.createdAt).getTime();
+          return age >= 0 && age < POLL_INTERVAL_MS * 1.5;
+        });
         return [...snapshot.orders, ...localOnly].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
       });
     }
