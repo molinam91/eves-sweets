@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { type BackendMenuRow, fetchBackendSnapshot, saveMenuToBackend } from "@/lib/backend";
 import { DEFAULT_CATERING, DEFAULT_MENU } from "@/lib/mockData";
-import { uniqueSlug } from "@/lib/slug";
+import { slugify, uniqueSlug } from "@/lib/slug";
 import type { Addon, Product } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-menu-v1";
@@ -37,6 +37,25 @@ const DEFAULT_PRODUCTS = [...DEFAULT_MENU, ...DEFAULT_CATERING];
 // codebase) nor the sheet (which never carries these) has these, so without
 // this fallback a bundled photo can vanish behind an older cached snapshot.
 const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo]));
+
+/**
+ * Bundled stock photos for items Jayro added himself from the admin panel (they live
+ * only in the sheet, under whatever id the admin form generated, so DEFAULT_PHOTO_BY_ID
+ * can't key on their id). Matched by the tokens in the item's own name instead -- Jayro
+ * confirmed each photo he sent is named after an existing menu item, not a new one.
+ */
+const DEFAULT_PHOTO_BY_NAME_TOKENS: { tokens: string[]; photo: string }[] = [
+  { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg" },
+  { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg" },
+];
+
+function defaultPhotoByName(name: string): string | undefined {
+  const normalized = slugify(name);
+  const match = DEFAULT_PHOTO_BY_NAME_TOKENS.find((entry) =>
+    entry.tokens.every((token) => normalized.includes(token))
+  );
+  return match?.photo;
+}
 
 /**
  * This browser's own saved catalog can predate a fix (or come from a moment
@@ -121,7 +140,11 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
         const localPhotoById = new Map(prev.map((p) => [p.id, p.photo]));
         return snapshot.menu.map((item) => ({
           ...item,
-          photo: item.photo || localPhotoById.get(item.id) || DEFAULT_PHOTO_BY_ID.get(item.id),
+          photo:
+            item.photo ||
+            localPhotoById.get(item.id) ||
+            DEFAULT_PHOTO_BY_ID.get(item.id) ||
+            defaultPhotoByName(item.name),
         }));
       });
     });
