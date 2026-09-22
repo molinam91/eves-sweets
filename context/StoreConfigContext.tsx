@@ -12,9 +12,43 @@ export const DEFAULT_RULES: StoreRules = {
   bulkMinQty: 5,
   bulkFreeDeliveryQty: 5,
   whatsappNumbers: ["15555555555"], // placeholder -- Jayro to provide the real business number
+  socialTiktok: "",
+  socialInstagram: "",
+  socialFacebook: "",
+  contactEmail: "",
+  contactPhones: [],
+  // SHA-256 of "EvesSweets2026" -- starter password, change it from Settings.
+  adminPasswordHash: "d1b8546159b7bb46fa2455017ee9d5754cdb48f407fd288d0ef9f5a99e375313",
 };
 
 const DEFAULT_PROMO_CODES: PromoCode[] = [];
+
+/** Same reasoning as MenuContext's sanitizer: a sheet-hand-edited or pre-fix-saved rules object can have the wrong shape. */
+function sanitizeStoredRules(parsed: unknown): Partial<StoreRules> {
+  if (!parsed || typeof parsed !== "object") return {};
+  const r = parsed as Record<string, unknown>;
+  const num = (v: unknown, fallback: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    deliveryFee: num(r.deliveryFee, DEFAULT_RULES.deliveryFee),
+    bulkMaxPrice: num(r.bulkMaxPrice, DEFAULT_RULES.bulkMaxPrice),
+    bulkMinQty: num(r.bulkMinQty, DEFAULT_RULES.bulkMinQty),
+    bulkFreeDeliveryQty: num(r.bulkFreeDeliveryQty, DEFAULT_RULES.bulkFreeDeliveryQty),
+    whatsappNumbers:
+      Array.isArray(r.whatsappNumbers) && r.whatsappNumbers.length
+        ? r.whatsappNumbers.map((n) => str(n)).filter(Boolean)
+        : DEFAULT_RULES.whatsappNumbers,
+    socialTiktok: str(r.socialTiktok),
+    socialInstagram: str(r.socialInstagram),
+    socialFacebook: str(r.socialFacebook),
+    contactEmail: str(r.contactEmail),
+    contactPhones: Array.isArray(r.contactPhones) ? r.contactPhones.map((n) => str(n)).filter(Boolean) : [],
+    adminPasswordHash: str(r.adminPasswordHash) || DEFAULT_RULES.adminPasswordHash,
+  };
+}
 
 type StoredConfig = {
   rules: StoreRules;
@@ -46,8 +80,8 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         // field added later, like whatsappNumbers) still gets a valid value.
         // One-time hydration sync from localStorage (SSR has no access to it), not a loop.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRules({ ...DEFAULT_RULES, ...parsed.rules });
-        setPromoCodes(parsed.promoCodes);
+        setRules({ ...DEFAULT_RULES, ...sanitizeStoredRules(parsed.rules) });
+        setPromoCodes(Array.isArray(parsed.promoCodes) ? parsed.promoCodes : DEFAULT_PROMO_CODES);
       }
     } catch {
       // ignore -- seed data stays

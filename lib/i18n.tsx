@@ -65,7 +65,7 @@ type UIStrings = {
   admin_password_placeholder: string;
   admin_enter: string;
   back_to_store: string;
-  admin_hint: string;
+  admin_wrong_password: string;
   admin_panel_title: string;
   admin_sales_week: string;
   admin_new_orders: string;
@@ -88,6 +88,13 @@ type UIStrings = {
   admin_inactive: string;
   admin_settings: string;
   admin_reset: string;
+  admin_social_contact: string;
+  admin_contact_email: string;
+  admin_contact_phones: string;
+  admin_change_password: string;
+  admin_new_password: string;
+  admin_new_password_placeholder: string;
+  admin_password_saved: string;
   language: string;
 };
 
@@ -172,7 +179,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_password_placeholder: "Password",
     admin_enter: "Enter",
     back_to_store: "Back to store",
-    admin_hint: "Preview only — any password works. Real auth connects with the backend.",
+    admin_wrong_password: "Incorrect password.",
     admin_panel_title: "Admin panel",
     admin_sales_week: "Sales this week",
     admin_new_orders: "New orders",
@@ -195,6 +202,13 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_inactive: "Inactive",
     admin_settings: "Checkout settings",
     admin_reset: "Reset sample menu",
+    admin_social_contact: "Social links & contact",
+    admin_contact_email: "Contact email",
+    admin_contact_phones: "Phone numbers (shown to customers)",
+    admin_change_password: "Admin password",
+    admin_new_password: "New password",
+    admin_new_password_placeholder: "Leave blank to keep the current one",
+    admin_password_saved: "Password updated.",
     language: "Language",
   },
   es: {
@@ -278,7 +292,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_password_placeholder: "Contrasena",
     admin_enter: "Entrar",
     back_to_store: "Volver a la tienda",
-    admin_hint: "Vista previa — cualquier contrasena funciona. La proteccion real se conecta con el backend.",
+    admin_wrong_password: "Contrasena incorrecta.",
     admin_panel_title: "Panel de administrador",
     admin_sales_week: "Ventas esta semana",
     admin_new_orders: "Pedidos nuevos",
@@ -301,6 +315,13 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_inactive: "Inactivo",
     admin_settings: "Configuracion de pedidos",
     admin_reset: "Restaurar menu de ejemplo",
+    admin_social_contact: "Redes sociales y contacto",
+    admin_contact_email: "Correo de contacto",
+    admin_contact_phones: "Numeros de telefono (visibles para clientes)",
+    admin_change_password: "Contrasena de administrador",
+    admin_new_password: "Nueva contrasena",
+    admin_new_password_placeholder: "Dejar en blanco para no cambiarla",
+    admin_password_saved: "Contrasena actualizada.",
     language: "Idioma",
   },
 };

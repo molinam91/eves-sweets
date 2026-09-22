@@ -18,19 +18,49 @@ import {
   pacificNow,
   toPacificDate,
 } from "@/lib/delivery";
+import { sha256Hex } from "@/lib/hash";
 import type { Order, Product, PromoCode } from "@/lib/types";
 
 const DAY_LABELS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+const SESSION_KEY = "eves-sweets-admin-unlocked";
 
 export default function AdminPage() {
   const { locale, t, toggleLocale } = useLocale();
+  const { rules } = useStoreConfig();
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    try {
+      // One-time check of this tab's session -- avoids re-typing the password on every reload.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (window.sessionStorage.getItem(SESSION_KEY) === "1") setUnlocked(true);
+    } catch {
+      // ignore -- private mode / blocked storage, just asks again
+    }
+  }, []);
+
+  async function handleUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    const hash = await sha256Hex(password);
+    if (hash === rules.adminPasswordHash) {
+      setAuthError("");
+      setUnlocked(true);
+      try {
+        window.sessionStorage.setItem(SESSION_KEY, "1");
+      } catch {
+        // ignore -- per-tab convenience only
+      }
+    } else {
+      setAuthError(t.admin_wrong_password);
+    }
+  }
 
   if (!unlocked) {
     return (
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5 py-10">
-        <div className="rounded-3xl border border-border bg-surface p-7 text-center shadow-lg">
+        <form onSubmit={handleUnlock} className="rounded-3xl border border-border bg-surface p-7 text-center shadow-lg">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-pink to-brand-gold font-script text-xl text-white">
             E
           </div>
@@ -38,13 +68,16 @@ export default function AdminPage() {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setAuthError("");
+            }}
             placeholder={t.admin_password_placeholder}
             className="mt-3.5 w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-center text-sm"
           />
+          {authError && <p className="mt-2 text-xs text-brand-danger">{authError}</p>}
           <button
-            type="button"
-            onClick={() => setUnlocked(true)}
+            type="submit"
             className="mt-3.5 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white hover:bg-brand-pink-dark"
           >
             {t.admin_enter}
@@ -62,8 +95,7 @@ export default function AdminPage() {
           >
             {t.language}: {locale === "en" ? "English" : "Espanol"}
           </button>
-          <p className="mt-3 text-[11px] text-foreground-soft">{t.admin_hint}</p>
-        </div>
+        </form>
       </div>
     );
   }
