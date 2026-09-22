@@ -193,17 +193,41 @@ export default function ProductFormModal({
         <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">Foto (opcional)</span>
         {photo && (
           <div className="mb-2 flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element -- small local preview of an in-memory data URL, not worth next/image here */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- may be a data: URL, not worth next/image here */}
             <img src={photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
-            <button
-              type="button"
-              onClick={() => setPhoto(undefined)}
-              className="text-xs underline text-brand-danger"
-            >
-              Quitar foto
-            </button>
+            <div>
+              <button
+                type="button"
+                onClick={() => setPhoto(undefined)}
+                className="text-xs underline text-brand-danger"
+              >
+                Quitar foto
+              </button>
+              <p className="mt-0.5 text-[11px] text-foreground-soft">
+                {photo.startsWith("http")
+                  ? "Visible para todos los clientes."
+                  : "Solo visible en este dispositivo (ver abajo)."}
+              </p>
+            </div>
           </div>
         )}
+
+        <label htmlFor="pf-photo-url" className="mb-1 block text-[11px] font-medium text-foreground-soft">
+          Opcion recomendada: pega el link de una foto (sube tu foto a imgur.com sin
+          necesidad de cuenta, copia el &quot;Direct link&quot; y pegalo aqui)
+        </label>
+        <input
+          id="pf-photo-url"
+          type="text"
+          value={photo?.startsWith("http") ? photo : ""}
+          onChange={(e) => setPhoto(e.target.value.trim() || undefined)}
+          placeholder="https://i.imgur.com/xxxxx.jpg"
+          className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
+        />
+
+        <p className="mb-1 mt-2.5 block text-[11px] font-medium text-foreground-soft">
+          O sube una foto desde este dispositivo (solo tu la veras, tus clientes no):
+        </p>
         <input
           type="file"
           accept="image/*"
@@ -211,9 +235,6 @@ export default function ProductFormModal({
           className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
         />
         {photoError && <p className="mt-1.5 text-xs text-brand-danger">{photoError}</p>}
-        <p className="mt-1.5 text-[11px] text-foreground-soft">
-          Por ahora la foto solo se guarda en este dispositivo; los clientes no la veran todavia.
-        </p>
 
         <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
           Toppings / extras (opcional)

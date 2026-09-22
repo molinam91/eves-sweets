@@ -30,13 +30,22 @@ export function formatDeliveryDate(date: Date, locale: "en" | "es" = "es"): stri
   });
 }
 
-export function money(amount: number): string {
-  return "$" + amount.toFixed(2);
+/** Never throws -- anything that isn't a finite number (bad/missing backend data) renders as $0.00. */
+export function money(amount: unknown): string {
+  const n = Number(amount);
+  return "$" + (Number.isFinite(n) ? n : 0).toFixed(2);
 }
 
-/** A Date whose getDay/getDate/etc reflect the Pacific wall-clock moment of an ISO instant. */
+/**
+ * A Date whose getDay/getDate/etc reflect the Pacific wall-clock moment of an
+ * ISO instant. Never throws -- an unparseable/missing string (bad backend
+ * data) falls back to the current moment instead of producing an Invalid
+ * Date, which would throw on the very next toLocaleString/getDay call.
+ */
 export function toPacificDate(isoString: string): Date {
-  return new Date(new Date(isoString).toLocaleString("en-US", { timeZone: PACIFIC_TZ }));
+  const parsed = new Date(isoString);
+  const safe = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  return new Date(safe.toLocaleString("en-US", { timeZone: PACIFIC_TZ }));
 }
 
 /** 0 = Monday ... 6 = Sunday, from a Pacific-shifted Date's getDay() (0 Sun...6 Sat). */
