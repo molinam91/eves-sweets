@@ -32,7 +32,11 @@ const MenuContext = createContext<MenuContextValue | null>(null);
 
 const DEFAULT_PRODUCTS = [...DEFAULT_MENU, ...DEFAULT_CATERING];
 
-/** Photos are device-local only (too large for a sheet cell), so they're never sent to the backend. */
+/**
+ * A photo pasted as a URL is small and shareable, so it's synced to the sheet.
+ * A photo picked from this device's files is a data: URL (can be 100KB+) and
+ * stays local-only -- it's left out of what's sent to the backend.
+ */
 function toBackendRow(p: Product): BackendMenuRow {
   return {
     id: p.id,
@@ -42,6 +46,7 @@ function toBackendRow(p: Product): BackendMenuRow {
     gradient: p.gradient,
     isCatering: p.isCatering,
     addons: p.addons,
+    photo: p.photo?.startsWith("http") ? p.photo : undefined,
   };
 }
 
@@ -76,8 +81,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     fetchBackendSnapshot().then((snapshot) => {
       if (cancelled || !snapshot) return;
       setProducts((prev) => {
+        // A shared photo URL from the sheet wins; otherwise keep this device's
+        // local-only upload (never sent to the backend, so it never comes back).
         const localPhotoById = new Map(prev.map((p) => [p.id, p.photo]));
-        return snapshot.menu.map((item) => ({ ...item, photo: localPhotoById.get(item.id) }));
+        return snapshot.menu.map((item) => ({ ...item, photo: item.photo || localPhotoById.get(item.id) }));
       });
     });
     return () => {

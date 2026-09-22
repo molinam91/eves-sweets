@@ -6,6 +6,7 @@ import { LocaleProvider } from "@/context/LocaleContext";
 import { MenuProvider } from "@/context/MenuContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { StoreConfigProvider } from "@/context/StoreConfigContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import ModalRoot from "@/components/ModalRoot";
 
 const bodyFont = Poppins({
@@ -33,18 +34,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${bodyFont.variable} ${scriptFont.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-brand-bg">
-        <LocaleProvider>
-          <MenuProvider>
-            <StoreConfigProvider>
-              <OrderProvider>
-                <CartProvider>
-                  {children}
-                  <ModalRoot />
-                </CartProvider>
-              </OrderProvider>
-            </StoreConfigProvider>
-          </MenuProvider>
-        </LocaleProvider>
+        <ErrorBoundary>
+          <LocaleProvider>
+            <MenuProvider>
+              <StoreConfigProvider>
+                <OrderProvider>
+                  <CartProvider>
+                    {children}
+                    <ModalRoot />
+                  </CartProvider>
+                </OrderProvider>
+              </StoreConfigProvider>
+            </MenuProvider>
+          </LocaleProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
