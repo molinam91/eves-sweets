@@ -69,11 +69,11 @@ type UIStrings = {
   admin_wrong_password: string;
   admin_panel_title: string;
   admin_sales_week: string;
-  admin_new_orders: string;
+  admin_orders_week: string;
   admin_next_delivery: string;
   admin_weekly_summary: string;
   admin_no_sales_yet: string;
-  admin_orders: string;
+  admin_best_sellers: string;
   admin_menu_catering: string;
   admin_add_item: string;
   admin_edit: string;
@@ -184,11 +184,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_wrong_password: "Incorrect password.",
     admin_panel_title: "Admin panel",
     admin_sales_week: "Sales this week",
-    admin_new_orders: "New orders",
+    admin_orders_week: "Orders this week",
     admin_next_delivery: "Next delivery",
     admin_weekly_summary: "Weekly sales summary",
     admin_no_sales_yet: "No sales yet this week.",
-    admin_orders: "Orders",
+    admin_best_sellers: "Best sellers",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Add item",
     admin_edit: "Edit",
@@ -298,11 +298,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_wrong_password: "Contrasena incorrecta.",
     admin_panel_title: "Panel de administrador",
     admin_sales_week: "Ventas esta semana",
-    admin_new_orders: "Pedidos nuevos",
+    admin_orders_week: "Pedidos esta semana",
     admin_next_delivery: "Proxima entrega",
     admin_weekly_summary: "Resumen de ventas semanales",
     admin_no_sales_yet: "Todavia no hay ventas esta semana.",
-    admin_orders: "Pedidos",
+    admin_best_sellers: "Mas vendido",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Agregar articulo",
     admin_edit: "Editar",
