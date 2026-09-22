@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale } from "@/context/LocaleContext";
 import { useStoreConfig } from "@/context/StoreConfigContext";
 import { sha256Hex } from "@/lib/hash";
+import { PLACEHOLDER_WHATSAPP_NUMBER } from "@/lib/types";
 
 export default function StoreRulesForm() {
   const { t } = useLocale();
@@ -151,6 +152,12 @@ export default function StoreRulesForm() {
         <span className="mb-1 block text-xs font-medium text-foreground-soft">
           Numeros de WhatsApp (el primero recibe los pedidos, los demas son de respaldo)
         </span>
+        {whatsappNumbers[0] === PLACEHOLDER_WHATSAPP_NUMBER && (
+          <p className="mb-2 rounded-xl bg-brand-danger/10 px-3 py-2 text-xs text-brand-danger">
+            El numero principal sigue siendo el de prueba. Los clientes no podran enviar pedidos hasta
+            que agregues tu numero real y lo marques como &quot;principal&quot;, luego presiones Guardar.
+          </p>
+        )}
         {whatsappNumbers.length > 0 && (
           <div className="mb-2 space-y-1.5">
             {whatsappNumbers.map((num, idx) => (

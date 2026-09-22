@@ -1,3 +1,6 @@
+/** Seed value before a real business WhatsApp number is configured. Never a valid send target. */
+export const PLACEHOLDER_WHATSAPP_NUMBER = "15555555555";
+
 export type Addon = {
   id: string;
   name: string;

@@ -56,6 +56,7 @@ type UIStrings = {
   discount_label: string;
   order_total: string;
   send_whatsapp: string;
+  whatsapp_not_configured: string;
   back_to_cart: string;
   thanks_title: (name: string) => string;
   thanks_body: string;
@@ -169,6 +170,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     discount_label: "Discount",
     order_total: "Order total",
     send_whatsapp: "Send order via WhatsApp",
+    whatsapp_not_configured: "Ordering isn't set up yet — please contact the bakery directly.",
     back_to_cart: "Back to cart",
     thanks_title: (name: string) => `Thanks, ${name}!`,
     thanks_body:
@@ -282,6 +284,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     discount_label: "Descuento",
     order_total: "Total del pedido",
     send_whatsapp: "Enviar pedido por WhatsApp",
+    whatsapp_not_configured: "Los pedidos no estan configurados todavia — por favor contacta a la panaderia directamente.",
     back_to_cart: "Volver al carrito",
     thanks_title: (name: string) => `Gracias, ${name}!`,
     thanks_body:
