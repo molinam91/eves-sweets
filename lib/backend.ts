@@ -25,6 +25,16 @@ export type BackendSnapshot = {
   promos: PromoCode[];
   config: StoreRules;
   orders: Order[];
+  /**
+   * False when the deployed Apps Script's `config` response is missing a field only the
+   * current schema has (e.g. `adminPasswordHash`) -- a strong signal the endpoint is
+   * still running an older version of Code.gs (pasting new code does nothing at the
+   * /exec URL until it's redeployed as a new version). When this is false, whatsapp
+   * numbers still round-trip (that field has been there since the first backend
+   * version), but social links, contact info, and the admin password have no column to
+   * be written into and will never persist no matter how many times they're saved.
+   */
+  endpointHasExtendedConfig: boolean;
 };
 
 /**
@@ -89,6 +99,10 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
     : [];
 
   const c = (d.config ?? {}) as Record<string, unknown>;
+  // Checked on the RAW response, before any defaults below fill it in -- a deployment
+  // still running the original 5-column schema simply never sends this key at all, so
+  // its absence (not just an empty value) is the signal.
+  const endpointHasExtendedConfig = Object.prototype.hasOwnProperty.call(c, "adminPasswordHash");
   const config: StoreRules = {
     deliveryFee: asNumber(c.deliveryFee, 5),
     bulkMaxPrice: asNumber(c.bulkMaxPrice, 10),
@@ -147,13 +161,24 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
       })
     : [];
 
-  return { menu, promos, config, orders };
+  return { menu, promos, config, orders, endpointHasExtendedConfig };
 }
 
-/** GETs the whole snapshot. Returns null on any failure (offline, misconfigured URL, malformed response, etc). */
+/**
+ * GETs the whole snapshot. Returns null on any failure (offline, misconfigured URL,
+ * malformed response, etc).
+ *
+ * A GET to the same Apps Script /exec URL is a known caching trap: both the browser's
+ * own HTTP cache and Google's edge in front of a public ("Anyone") deployment can serve
+ * a stale response for a plain, unparameterized GET, so a page can keep showing old
+ * config (or a save's own verification re-read, below, can wrongly compare against
+ * pre-save data) long after the Sheet itself was updated. `cache: "no-store"` plus a
+ * cache-busting query param forces every call to actually hit the script fresh.
+ */
 export async function fetchBackendSnapshot(): Promise<BackendSnapshot | null> {
   try {
-    const res = await fetch(BACKEND_URL, { method: "GET" });
+    const url = `${BACKEND_URL}?t=${Date.now()}`;
+    const res = await fetch(url, { method: "GET", cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
     if (data && typeof data === "object" && "error" in data) return null;
@@ -172,6 +197,7 @@ async function postBackend(action: string, payload: unknown): Promise<{ ok: bool
   try {
     const res = await fetch(BACKEND_URL, {
       method: "POST",
+      cache: "no-store",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action, payload }),
     });
@@ -202,4 +228,9 @@ export function addOrderToBackend(order: Order) {
 
 export function completeOrderInBackend(id: string) {
   return postBackend("complete_order", { id });
+}
+
+/** Deletes every recorded order (resets sales/best-sellers). Never touches menu, promos, or config. */
+export function clearOrdersInBackend() {
+  return postBackend("clear_orders", {});
 }

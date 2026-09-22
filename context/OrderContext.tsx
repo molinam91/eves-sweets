@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { addOrderToBackend, completeOrderInBackend, fetchBackendSnapshot } from "@/lib/backend";
+import { addOrderToBackend, clearOrdersInBackend, completeOrderInBackend, fetchBackendSnapshot } from "@/lib/backend";
 import type { Order } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-orders-v1";
@@ -15,6 +15,8 @@ type OrderContextValue = {
   findOrder: (id: string) => Order | undefined;
   addOrder: (order: Omit<Order, "id" | "createdAt" | "status">) => Order;
   completeOrder: (id: string) => void;
+  /** Deletes every recorded order (sales/best-sellers reset). Resolves true once the shared Sheet confirms it's empty. */
+  clearOrders: () => Promise<boolean>;
 };
 
 const OrderContext = createContext<OrderContextValue | null>(null);
@@ -120,10 +122,16 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     completeOrderInBackend(id);
   }, []);
 
+  const clearOrders = useCallback(async (): Promise<boolean> => {
+    setAllOrders([]);
+    const result = await clearOrdersInBackend();
+    return Boolean(result?.ok);
+  }, []);
+
   const orders = useMemo(() => allOrders.filter((o) => o.status === "new"), [allOrders]);
   const findOrder = useCallback((id: string) => allOrders.find((o) => o.id === id), [allOrders]);
 
-  const value: OrderContextValue = { orders, allOrders, findOrder, addOrder, completeOrder };
+  const value: OrderContextValue = { orders, allOrders, findOrder, addOrder, completeOrder, clearOrders };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
 }

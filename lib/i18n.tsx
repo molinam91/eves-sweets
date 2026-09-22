@@ -97,6 +97,9 @@ type UIStrings = {
   admin_new_password_placeholder: string;
   admin_password_saved: string;
   admin_sync_warning: string;
+  admin_reset_sales: string;
+  admin_resetting_sales: string;
+  admin_endpoint_outdated: string;
   language: string;
 };
 
@@ -214,6 +217,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_password_saved: "Password updated.",
     admin_sync_warning:
       "Saved on this device, but it could not be confirmed on the shared Sheet. Make sure the Apps Script is deployed as a new version, then check your connection.",
+    admin_reset_sales: "Reset sales",
+    admin_resetting_sales: "Resetting...",
+    admin_endpoint_outdated:
+      "The connected Google Sheet is running an older version of the backend script. Social links, contact info, and the admin password won't save until it's redeployed as a new version.",
     language: "Language",
   },
   es: {
@@ -330,6 +337,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_password_saved: "Contrasena actualizada.",
     admin_sync_warning:
       "Se guardo en este dispositivo, pero no se pudo confirmar en la hoja compartida. Verifica que el Apps Script este desplegado como version nueva, y tu conexion.",
+    admin_reset_sales: "Reiniciar ventas",
+    admin_resetting_sales: "Reiniciando...",
+    admin_endpoint_outdated:
+      "La hoja de Google conectada esta usando una version anterior del script. Las redes sociales, el contacto y la contrasena de administrador no se guardaran hasta que se despliegue como version nueva.",
     language: "Idioma",
   },
 };

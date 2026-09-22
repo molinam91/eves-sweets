@@ -106,7 +106,8 @@ function AdminDashboard() {
   const { locale, t, toggleLocale } = useLocale();
   const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
   const { promoCodes, deletePromoCode } = useStoreConfig();
-  const { allOrders } = useOrders();
+  const { allOrders, clearOrders } = useOrders();
+  const [resettingSales, setResettingSales] = useState(false);
 
   const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
     null
@@ -169,6 +170,25 @@ function AdminDashboard() {
       .slice(0, 8);
   }, [allOrders]);
 
+  async function handleResetSales() {
+    const count = allOrders.length;
+    const message =
+      locale === "en"
+        ? `Delete all ${count} recorded order(s)? This resets sales and best sellers to zero and cannot be undone. Menu, prices, promo codes, socials, and settings are not affected.`
+        : `¿Borrar los ${count} pedido(s) registrados? Esto pone en cero las ventas y lo mas vendido, y no se puede deshacer. No afecta el menu, precios, codigos promo, redes ni ajustes.`;
+    if (count === 0 || !window.confirm(message)) return;
+    setResettingSales(true);
+    const ok = await clearOrders();
+    setResettingSales(false);
+    if (!ok) {
+      window.alert(
+        locale === "en"
+          ? "Could not confirm the reset reached the shared Sheet. Try again."
+          : "No se pudo confirmar que el reinicio llego a la hoja compartida. Intenta de nuevo."
+      );
+    }
+  }
+
   function handleDeleteProduct(product: Product) {
     if (window.confirm(`${t.admin_delete} "${product.name}"?`)) {
       deleteProduct(product.id);
@@ -215,7 +235,17 @@ function AdminDashboard() {
       </div>
 
       <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
-        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_weekly_summary}</h2>
+        <div className="mb-3.5 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">{t.admin_weekly_summary}</h2>
+          <button
+            type="button"
+            onClick={handleResetSales}
+            disabled={resettingSales}
+            className="rounded-full border border-brand-danger/40 px-4 py-2 text-xs text-brand-danger disabled:opacity-50"
+          >
+            {resettingSales ? t.admin_resetting_sales : t.admin_reset_sales}
+          </button>
+        </div>
         {hasSalesThisWeek ? (
           <div className="flex h-36 items-end gap-2.5">
             {DAY_LABELS.map((day, i) => (

@@ -64,6 +64,8 @@ type StoreConfigContextValue = {
   updatePromoCode: (code: string, promo: PromoCode) => void;
   deletePromoCode: (code: string) => void;
   findPromoCode: (code: string) => PromoCode | undefined;
+  /** True once we've confirmed the deployed Apps Script is still on the original 5-column Config schema. */
+  endpointOutdated: boolean;
 };
 
 const StoreConfigContext = createContext<StoreConfigContextValue | null>(null);
@@ -76,6 +78,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   // it would silently revert a change the admin just made and already posted back. Once
   // there's been a local edit this session, that edit -- not a slow, now-stale GET -- wins.
   const userEditedRef = useRef(false);
+  const [endpointOutdated, setEndpointOutdated] = useState(false);
 
   useEffect(() => {
     try {
@@ -108,7 +111,9 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let cancelled = false;
     fetchBackendSnapshot().then((snapshot) => {
-      if (cancelled || !snapshot || userEditedRef.current) return;
+      if (cancelled || !snapshot) return;
+      setEndpointOutdated(!snapshot.endpointHasExtendedConfig);
+      if (userEditedRef.current) return;
       setRules({ ...DEFAULT_RULES, ...snapshot.config });
       setPromoCodes(snapshot.promos);
     });
@@ -129,6 +134,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     // Read the snapshot back and confirm what we sent is really what's there now.
     const check = await fetchBackendSnapshot();
     if (!check) return false;
+    setEndpointOutdated(!check.endpointHasExtendedConfig);
     return (
       JSON.stringify(check.config.whatsappNumbers) === JSON.stringify(next.whatsappNumbers) &&
       check.config.socialTiktok === next.socialTiktok &&
@@ -176,8 +182,17 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   );
 
   const value: StoreConfigContextValue = useMemo(
-    () => ({ rules, promoCodes, updateRules, addPromoCode, updatePromoCode, deletePromoCode, findPromoCode }),
-    [rules, promoCodes, updateRules, addPromoCode, updatePromoCode, deletePromoCode, findPromoCode]
+    () => ({
+      rules,
+      promoCodes,
+      updateRules,
+      addPromoCode,
+      updatePromoCode,
+      deletePromoCode,
+      findPromoCode,
+      endpointOutdated,
+    }),
+    [rules, promoCodes, updateRules, addPromoCode, updatePromoCode, deletePromoCode, findPromoCode, endpointOutdated]
   );
 
   return <StoreConfigContext.Provider value={value}>{children}</StoreConfigContext.Provider>;
