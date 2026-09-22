@@ -98,6 +98,14 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
       Array.isArray(c.whatsappNumbers) && c.whatsappNumbers.length
         ? c.whatsappNumbers.map((n) => asString(n)).filter(Boolean)
         : ["15555555555"],
+    socialTiktok: asString(c.socialTiktok),
+    socialInstagram: asString(c.socialInstagram),
+    socialFacebook: asString(c.socialFacebook),
+    contactEmail: asString(c.contactEmail),
+    contactPhones: Array.isArray(c.contactPhones) ? c.contactPhones.map((n) => asString(n)).filter(Boolean) : [],
+    // SHA-256 of "EvesSweets2026" -- same starter default as StoreConfigContext, used when the sheet has none set yet.
+    adminPasswordHash:
+      asString(c.adminPasswordHash) || "d1b8546159b7bb46fa2455017ee9d5754cdb48f407fd288d0ef9f5a99e375313",
   };
 
   const orders = Array.isArray(d.orders)

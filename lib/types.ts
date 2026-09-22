@@ -83,4 +83,12 @@ export type StoreRules = {
   bulkFreeDeliveryQty: number;
   /** WhatsApp numbers orders can go to. Index 0 is the primary number used at checkout; the rest are extras. */
   whatsappNumbers: string[];
+  /** Social/contact links shown in the footer. Empty string/array means "not set, hide it". */
+  socialTiktok: string;
+  socialInstagram: string;
+  socialFacebook: string;
+  contactEmail: string;
+  contactPhones: string[];
+  /** SHA-256 hex of the admin panel password. Checked client-side (no server), but no longer accepts anything. */
+  adminPasswordHash: string;
 };
