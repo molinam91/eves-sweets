@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { fetchBackendSnapshot, saveConfigToBackend, savePromosToBackend } from "@/lib/backend";
 import { PLACEHOLDER_WHATSAPP_NUMBER, type PromoCode, type StoreRules } from "@/lib/types";
 
@@ -70,6 +70,11 @@ const StoreConfigContext = createContext<StoreConfigContextValue | null>(null);
 export function StoreConfigProvider({ children }: { children: React.ReactNode }) {
   const [rules, setRules] = useState<StoreRules>(DEFAULT_RULES);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(DEFAULT_PROMO_CODES);
+  // The one-time initial backend fetch below can resolve *after* the admin has already
+  // edited something (Google Apps Script can take several seconds). If it does, applying
+  // it would silently revert a change the admin just made and already posted back. Once
+  // there's been a local edit this session, that edit -- not a slow, now-stale GET -- wins.
+  const userEditedRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -102,7 +107,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let cancelled = false;
     fetchBackendSnapshot().then((snapshot) => {
-      if (cancelled || !snapshot) return;
+      if (cancelled || !snapshot || userEditedRef.current) return;
       setRules({ ...DEFAULT_RULES, ...snapshot.config });
       setPromoCodes(snapshot.promos);
     });
@@ -112,11 +117,13 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const updateRules = useCallback((next: StoreRules) => {
+    userEditedRef.current = true;
     setRules(next);
     saveConfigToBackend(next);
   }, []);
 
   const addPromoCode = useCallback((promo: PromoCode) => {
+    userEditedRef.current = true;
     let next!: PromoCode[];
     setPromoCodes((prev) => {
       next = [...prev, { ...promo, code: promo.code.toUpperCase() }];
@@ -126,6 +133,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const updatePromoCode = useCallback((code: string, promo: PromoCode) => {
+    userEditedRef.current = true;
     let next!: PromoCode[];
     setPromoCodes((prev) => {
       next = prev.map((p) => (p.code === code ? { ...promo, code: promo.code.toUpperCase() } : p));
@@ -135,6 +143,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const deletePromoCode = useCallback((code: string) => {
+    userEditedRef.current = true;
     let next!: PromoCode[];
     setPromoCodes((prev) => {
       next = prev.filter((p) => p.code !== code);
