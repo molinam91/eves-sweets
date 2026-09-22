@@ -137,13 +137,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       return [created, ...prev];
     });
     const localId = created.id;
-    // One retry after a short pause -- covers a transient blip (e.g. a shaky mobile
-    // connection) rather than surfacing a save error the customer would have to retype.
-    let res = await addOrderToBackend(created);
-    if (!res?.ok) {
-      await new Promise((r) => setTimeout(r, 1200));
-      res = await addOrderToBackend(created);
-    }
+    // A single attempt only -- add_order always appends a new row with no idempotency
+    // check, so retrying it is unsafe: if the first POST actually landed but its
+    // response was lost (the same kind of flaky mobile connection that caused orders to
+    // never save in the first place), a retry creates a second, fully real duplicate
+    // order rather than recovering a failed one. A genuinely failed save still surfaces
+    // as a visible error at checkout (see CheckoutModal), and the customer can just tap
+    // send again -- safer than the alternative.
+    const res = await addOrderToBackend(created);
     const backendId = res?.ok && typeof res.id === "string" ? res.id : null;
     if (backendId && backendId !== localId) {
       created = { ...created, id: backendId };
