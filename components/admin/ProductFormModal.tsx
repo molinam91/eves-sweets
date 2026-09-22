@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Overlay from "@/components/Overlay";
-import { GRADIENT_PRESETS } from "@/lib/mockData";
 import { useMenu, type ProductInput } from "@/context/MenuContext";
+import { money } from "@/lib/delivery";
+import { GRADIENT_PRESETS } from "@/lib/mockData";
 import { uniqueSlug } from "@/lib/slug";
 import type { Addon, Product } from "@/lib/types";
 
@@ -248,7 +249,7 @@ export default function ProductFormModal({
               >
                 <span>{addon.name}</span>
                 <div className="flex items-center gap-2.5">
-                  <span className="tabular-nums text-foreground-soft">+${addon.price.toFixed(2)}</span>
+                  <span className="tabular-nums text-foreground-soft">+{money(addon.price)}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveAddon(addon.id)}
