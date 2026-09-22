@@ -47,28 +47,46 @@ export default function StoreRulesForm() {
     setTimeout(() => setPasswordSaved(false), 2000);
   }
 
+  const [numbersSaved, setNumbersSaved] = useState(false);
+
+  // A placeholder number is never worth keeping once a real one exists -- drops it so
+  // the real number always lands at index 0 (primary), with no separate "make primary"
+  // step a real number could otherwise be left stuck behind.
+  function persistNumbers(next: string[]) {
+    const real = next.filter((n) => n !== PLACEHOLDER_WHATSAPP_NUMBER);
+    const final = real.length > 0 ? real : [PLACEHOLDER_WHATSAPP_NUMBER];
+    setWhatsappNumbers(final);
+    updateRules({ ...rules, whatsappNumbers: final });
+    setNumbersSaved(true);
+    setTimeout(() => setNumbersSaved(false), 2000);
+  }
+
   function handleAddNumber() {
     const trimmed = newNumber.trim().replace(/[^\d]/g, "");
     if (!trimmed) return;
-    setWhatsappNumbers((prev) => [...prev, trimmed]);
+    persistNumbers([...whatsappNumbers, trimmed]);
     setNewNumber("");
   }
 
   function handleRemoveNumber(idx: number) {
-    setWhatsappNumbers((prev) => prev.filter((_, i) => i !== idx));
+    persistNumbers(whatsappNumbers.filter((_, i) => i !== idx));
   }
 
   function handleEditNumber(idx: number, value: string) {
     const digits = value.replace(/[^\d]/g, "");
+    // Live-typing state only -- persisted on blur (handleEditNumberDone) so every
+    // keystroke doesn't fire a save.
     setWhatsappNumbers((prev) => prev.map((n, i) => (i === idx ? digits : n)));
   }
 
+  function handleEditNumberDone() {
+    persistNumbers(whatsappNumbers);
+  }
+
   function handleMakePrimary(idx: number) {
-    setWhatsappNumbers((prev) => {
-      const next = [...prev];
-      const [chosen] = next.splice(idx, 1);
-      return [chosen, ...next];
-    });
+    const next = [...whatsappNumbers];
+    const [chosen] = next.splice(idx, 1);
+    persistNumbers([chosen, ...next]);
   }
 
   function handleSave(e: React.FormEvent) {
@@ -150,14 +168,15 @@ export default function StoreRulesForm() {
       </div>
       <div className="sm:col-span-2">
         <span className="mb-1 block text-xs font-medium text-foreground-soft">
-          Numeros de WhatsApp (el primero recibe los pedidos, los demas son de respaldo)
+          Numeros de WhatsApp (el primero recibe los pedidos, los demas son de respaldo — se guardan al instante)
         </span>
         {whatsappNumbers[0] === PLACEHOLDER_WHATSAPP_NUMBER && (
           <p className="mb-2 rounded-xl bg-brand-danger/10 px-3 py-2 text-xs text-brand-danger">
-            El numero principal sigue siendo el de prueba. Los clientes no podran enviar pedidos hasta
-            que agregues tu numero real y lo marques como &quot;principal&quot;, luego presiones Guardar.
+            Todavia no hay un numero real. Los clientes no podran enviar pedidos hasta que agregues tu
+            numero de WhatsApp abajo.
           </p>
         )}
+        {numbersSaved && <p className="mb-2 text-xs text-brand-ok">Guardado.</p>}
         {whatsappNumbers.length > 0 && (
           <div className="mb-2 space-y-1.5">
             {whatsappNumbers.map((num, idx) => (
@@ -169,6 +188,7 @@ export default function StoreRulesForm() {
                   type="text"
                   value={num}
                   onChange={(e) => handleEditNumber(idx, e.target.value)}
+                  onBlur={handleEditNumberDone}
                   className="w-full flex-1 bg-transparent tabular-nums outline-none"
                 />
                 {idx === 0 ? (
