@@ -191,7 +191,7 @@ export default function StoreRulesForm() {
       </div>
       <div>
         <label htmlFor="r-minqty" className="mb-1 block text-xs font-medium text-foreground-soft">
-          Cantidad minima por pedido (para esos articulos)
+          Cantidad minima por pedido (combinando articulos, mezcla y combina)
         </label>
         <input
           id="r-minqty"
@@ -205,7 +205,7 @@ export default function StoreRulesForm() {
       </div>
       <div>
         <label htmlFor="r-freeqty" className="mb-1 block text-xs font-medium text-foreground-soft">
-          Cantidad para envio gratis (mismo articulo)
+          Cantidad para envio gratis (combinando articulos, mezcla y combina)
         </label>
         <input
           id="r-freeqty"

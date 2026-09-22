@@ -14,9 +14,11 @@ export default function ItemModal({ product }: { product: Product }) {
   const { t, translateProduct } = useLocale();
   const { rules } = useStoreConfig();
   const isBulkPriced = product.price < rules.bulkMaxPrice;
-  const minQty = isBulkPriced ? rules.bulkMinQty : 1;
 
-  const [qty, setQty] = useState(minQty);
+  // Mix and match: the bulk minimum is checked against the combined quantity of
+  // every under-$10 item in the cart (see CartContext), not this one item alone,
+  // so there's no per-item floor here -- just the normal floor of 1.
+  const [qty, setQty] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, Addon>>({});
   const [eventDate, setEventDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -62,7 +64,7 @@ export default function ItemModal({ product }: { product: Product }) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setQty((q) => Math.max(minQty, q - 1))}
+            onClick={() => setQty((q) => Math.max(1, q - 1))}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-brand-pink-deep"
           >
             −
