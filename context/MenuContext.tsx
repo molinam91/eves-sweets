@@ -33,6 +33,30 @@ const MenuContext = createContext<MenuContextValue | null>(null);
 const DEFAULT_PRODUCTS = [...DEFAULT_MENU, ...DEFAULT_CATERING];
 
 /**
+ * This browser's own saved catalog can predate a fix (or come from a moment
+ * when the shared backend returned something odd), so a stale null/NaN price
+ * can be sitting in localStorage indefinitely. Coerce it back to a safe
+ * number on every hydration, the same way a fresh backend fetch is sanitized.
+ */
+function sanitizeStoredProducts(parsed: unknown): Product[] {
+  if (!Array.isArray(parsed)) return DEFAULT_PRODUCTS;
+  return parsed.map((raw) => {
+    const p = (raw ?? {}) as Partial<Product> & { price?: unknown; addons?: unknown };
+    const price = Number(p.price);
+    return {
+      ...(p as Product),
+      price: Number.isFinite(price) ? price : 0,
+      addons: Array.isArray(p.addons)
+        ? p.addons.map((a) => {
+            const addonPrice = Number((a as Partial<Addon>)?.price);
+            return { ...(a as Addon), price: Number.isFinite(addonPrice) ? addonPrice : 0 };
+          })
+        : [],
+    };
+  });
+}
+
+/**
  * A photo pasted as a URL is small and shareable, so it's synced to the sheet.
  * A photo picked from this device's files is a data: URL (can be 100KB+) and
  * stays local-only -- it's left out of what's sent to the backend.
@@ -60,7 +84,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       // One-time hydration sync from localStorage (SSR has no access to it), not a loop.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setProducts(JSON.parse(raw));
+      if (raw) setProducts(sanitizeStoredProducts(JSON.parse(raw)));
     } catch {
       // ignore -- private mode / blocked storage, seed data stays
     }

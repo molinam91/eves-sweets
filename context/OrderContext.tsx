@@ -19,6 +19,43 @@ type OrderContextValue = {
 
 const OrderContext = createContext<OrderContextValue | null>(null);
 
+/** Same reasoning as MenuContext's sanitizer: heal any stale bad order saved before this fix existed. */
+function sanitizeStoredOrders(parsed: unknown): Order[] {
+  if (!Array.isArray(parsed)) return [];
+  const num = (v: unknown, fallback = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  return parsed.map((raw) => {
+    const o = (raw ?? {}) as Partial<Order> & Record<string, unknown>;
+    return {
+      ...(o as Order),
+      createdAt: Number.isNaN(new Date(String(o.createdAt)).getTime()) ? new Date().toISOString() : String(o.createdAt),
+      subtotal: num(o.subtotal),
+      discount: num(o.discount),
+      deliveryFee: num(o.deliveryFee),
+      total: num(o.total),
+      items: Array.isArray(o.items)
+        ? o.items.map((raw2) => {
+            const line = (raw2 ?? {}) as Record<string, unknown>;
+            return {
+              ...line,
+              qty: num(line.qty, 1),
+              unitPrice: num(line.unitPrice),
+              lineTotal: num(line.lineTotal),
+              addons: Array.isArray(line.addons)
+                ? line.addons.map((a) => {
+                    const addon = (a ?? {}) as Record<string, unknown>;
+                    return { ...addon, price: num(addon.price) };
+                  })
+                : [],
+            };
+          })
+        : [],
+    } as Order;
+  });
+}
+
 export function OrderProvider({ children }: { children: React.ReactNode }) {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
 
@@ -27,7 +64,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       // One-time hydration sync from localStorage (SSR has no access to it), not a loop.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setAllOrders(JSON.parse(raw));
+      if (raw) setAllOrders(sanitizeStoredOrders(JSON.parse(raw)));
     } catch {
       // ignore -- private mode / blocked storage, starts empty
     }

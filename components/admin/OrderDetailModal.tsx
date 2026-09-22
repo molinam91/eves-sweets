@@ -23,7 +23,9 @@ export default function OrderDetailModal({
     <Overlay onClose={onClose}>
       <h3 className="text-lg font-semibold text-foreground">Pedido #{order.id}</h3>
       <p className="mt-1 text-xs text-foreground-soft">
-        {new Date(order.createdAt).toLocaleString("es-US")}
+        {Number.isNaN(new Date(order.createdAt).getTime())
+          ? order.createdAt
+          : new Date(order.createdAt).toLocaleString("es-US")}
       </p>
 
       <div className="mt-3.5 rounded-xl border border-border bg-surface-2 p-3.5">
