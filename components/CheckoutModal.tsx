@@ -46,6 +46,8 @@ export default function CheckoutModal() {
   const [notes, setNotes] = useState("");
   const [touched, setTouched] = useState(false);
   const [promoInput, setPromoInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const showFulfillment = !hasCatering;
   const friday = formatDeliveryDate(computeDeliveryFriday(), locale);
@@ -60,9 +62,19 @@ export default function CheckoutModal() {
     applyPromoCode(promoInput.trim());
   }
 
-  function handleSend() {
+  async function handleSend() {
     setTouched(true);
-    if (!name.trim() || !phone.trim() || !whatsappConfigured) return;
+    if (!name.trim() || !phone.trim() || !whatsappConfigured || sending) return;
+    setSaveError(false);
+
+    // Opened synchronously (in this click) so mobile browsers don't block it as a
+    // popup, then redirected once the order is confirmed saved -- WhatsApp taking
+    // over the tab right away used to cut off the save request before it finished,
+    // which is why past orders never reached the sheet. No `noopener` here: we keep
+    // this reference on purpose, to redirect it below.
+    const waWindow = window.open("", "_blank");
+
+    setSending(true);
 
     const lines: string[] = [];
     lines.push(t.wa_order_title);
@@ -94,10 +106,7 @@ export default function CheckoutModal() {
     lines.push(`${t.subtotal}: ${money(cartTotal)}`);
     lines.push(`${t.wa_total_label}: ${money(orderTotal)}`);
 
-    const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-    window.open(waUrl, "_blank", "noopener");
-
-    addOrder({
+    const { saved } = await addOrder({
       customerName: name.trim(),
       customerPhone: phone.trim(),
       fulfillment,
@@ -121,6 +130,18 @@ export default function CheckoutModal() {
       deliveryFee: deliveryFeeAmount,
       total: orderTotal,
     });
+
+    setSending(false);
+
+    if (!saved) {
+      setSaveError(true);
+      waWindow?.close();
+      return;
+    }
+
+    const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
+    if (waWindow) waWindow.location.href = waUrl;
+    else window.open(waUrl, "_blank", "noopener");
 
     const customerName = name.trim();
     clearCart();
@@ -321,12 +342,14 @@ export default function CheckoutModal() {
         {touched && !whatsappConfigured && (
           <p className="mt-3 text-xs text-brand-danger">{t.whatsapp_not_configured}</p>
         )}
+        {saveError && <p className="mt-3 text-xs text-brand-danger">{t.order_save_error}</p>}
         <button
           type="button"
           onClick={handleSend}
+          disabled={sending}
           className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-50"
         >
-          {t.send_whatsapp}
+          {sending ? t.sending_order : t.send_whatsapp}
         </button>
         <button
           type="button"

@@ -19,7 +19,10 @@ type OrderContextValue = {
   /** Every order regardless of status -- for sales totals. */
   allOrders: Order[];
   findOrder: (id: string) => Order | undefined;
-  addOrder: (order: Omit<Order, "id" | "createdAt" | "status">) => Order;
+  /** Resolves once the shared Sheet confirms the write (or fails) -- await this before
+   *  navigating away (e.g. to WhatsApp), since leaving the page can cancel an
+   *  in-flight save. `saved` is false when the backend never confirmed it. */
+  addOrder: (order: Omit<Order, "id" | "createdAt" | "status">) => Promise<{ order: Order; saved: boolean }>;
   completeOrder: (id: string) => void;
   /** Deletes one order (e.g. a test order), leaving every other order untouched. */
   deleteOrder: (id: string) => void;
@@ -109,20 +112,27 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const addOrder = useCallback((input: Omit<Order, "id" | "createdAt" | "status">): Order => {
+  const addOrder = useCallback(async (input: Omit<Order, "id" | "createdAt" | "status">) => {
     let created!: Order;
     setAllOrders((prev) => {
       const id = String(prev.length + 1).padStart(4, "0");
       created = { ...input, id, createdAt: new Date().toISOString(), status: "new" };
       return [created, ...prev];
     });
-    addOrderToBackend(created).then((res) => {
-      const backendId = res?.ok && typeof res.id === "string" ? res.id : null;
-      if (backendId && backendId !== created.id) {
-        setAllOrders((prev) => prev.map((o) => (o.id === created.id ? { ...o, id: backendId } : o)));
-      }
-    });
-    return created;
+    const localId = created.id;
+    // One retry after a short pause -- covers a transient blip (e.g. a shaky mobile
+    // connection) rather than surfacing a save error the customer would have to retype.
+    let res = await addOrderToBackend(created);
+    if (!res?.ok) {
+      await new Promise((r) => setTimeout(r, 1200));
+      res = await addOrderToBackend(created);
+    }
+    const backendId = res?.ok && typeof res.id === "string" ? res.id : null;
+    if (backendId && backendId !== localId) {
+      created = { ...created, id: backendId };
+      setAllOrders((prev) => prev.map((o) => (o.id === localId ? { ...o, id: backendId } : o)));
+    }
+    return { order: created, saved: Boolean(res?.ok) };
   }, []);
 
   const completeOrder = useCallback((id: string) => {

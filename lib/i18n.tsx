@@ -68,7 +68,9 @@ type UIStrings = {
   wa_notes_label: string;
   wa_total_label: string;
   send_whatsapp: string;
+  sending_order: string;
   whatsapp_not_configured: string;
+  order_save_error: string;
   back_to_cart: string;
   thanks_title: (name: string) => string;
   thanks_body: string;
@@ -211,7 +213,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     wa_notes_label: "Notes",
     wa_total_label: "Total",
     send_whatsapp: "Send order via WhatsApp",
+    sending_order: "Sending...",
     whatsapp_not_configured: "Ordering isn't set up yet — please contact the bakery directly.",
+    order_save_error:
+      "We couldn't save your order — please check your connection and try again before sending.",
     back_to_cart: "Back to cart",
     thanks_title: (name: string) => `Thanks, ${name}!`,
     thanks_body:
@@ -356,7 +361,9 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     wa_notes_label: "Notas",
     wa_total_label: "Total",
     send_whatsapp: "Enviar pedido por WhatsApp",
+    sending_order: "Enviando...",
     whatsapp_not_configured: "Los pedidos no estan configurados todavia — por favor contacta a la panaderia directamente.",
+    order_save_error: "No pudimos guardar tu pedido — revisa tu conexion e intenta de nuevo antes de enviar.",
     back_to_cart: "Volver al carrito",
     thanks_title: (name: string) => `Gracias, ${name}!`,
     thanks_body:
