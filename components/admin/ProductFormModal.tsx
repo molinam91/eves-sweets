@@ -4,6 +4,7 @@ import { useState } from "react";
 import Overlay from "@/components/Overlay";
 import { useMenu, type ProductInput } from "@/context/MenuContext";
 import { uploadPhotoToBackend } from "@/lib/backend";
+import { BUNDLED_PHOTOS } from "@/lib/bundledPhotos";
 import { money } from "@/lib/delivery";
 import { GRADIENT_PRESETS } from "@/lib/mockData";
 import { looksLikeDirectImageUrl, normalizePhotoUrl } from "@/lib/photoUrl";
@@ -255,9 +256,9 @@ export default function ProductFormModal({
               <p className="mt-0.5 text-[11px] text-foreground-soft">
                 {uploadingPhoto
                   ? "Subiendo..."
-                  : photo.startsWith("http")
-                    ? "Visible para todos los clientes."
-                    : "Solo visible en este dispositivo (ver abajo)."}
+                  : photo.startsWith("data:")
+                    ? "Solo visible en este dispositivo (ver abajo)."
+                    : "Visible para todos los clientes."}
               </p>
             </div>
           </div>
@@ -291,6 +292,29 @@ export default function ProductFormModal({
             es porque este es el link de una pagina y no de la imagen.
           </p>
         )}
+
+        <p className="mb-1 mt-2.5 block text-[11px] font-medium text-foreground-soft">
+          O elige una foto que ya tenemos:
+        </p>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+          {BUNDLED_PHOTOS.map((bp) => (
+            <button
+              key={bp.photo}
+              type="button"
+              onClick={() => {
+                setPhoto(bp.photo);
+                setPhotoError("");
+                setPhotoUrlWarning(false);
+              }}
+              title={bp.label}
+              className="overflow-hidden rounded-xl border-2"
+              style={{ borderColor: photo === bp.photo ? "var(--brand-pink-deep)" : "transparent" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- small fixed thumbnail grid, not worth next/image here */}
+              <img src={bp.photo} alt={bp.label} className="aspect-square w-full object-cover" />
+            </button>
+          ))}
+        </div>
 
         <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
           Toppings / extras (opcional)

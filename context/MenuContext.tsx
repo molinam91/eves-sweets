@@ -94,9 +94,12 @@ function sanitizeStoredProducts(parsed: unknown): Product[] {
 }
 
 /**
- * A photo pasted as a URL is small and shareable, so it's synced to the sheet.
- * A photo picked from this device's files is a data: URL (can be 100KB+) and
- * stays local-only -- it's left out of what's sent to the backend.
+ * A pasted URL or a picked bundled stock photo (a small "/menu/..." path) is
+ * small and shareable, so it's synced to the sheet -- an explicit bundled-photo
+ * pick needs this to reach every device, not just guess its way there via
+ * DEFAULT_PHOTO_BY_ID/name matching below. A photo picked from this device's
+ * own files is a data: URL (can be 100KB+) and stays local-only -- it's the
+ * only kind left out of what's sent to the backend.
  */
 function toBackendRow(p: Product): BackendMenuRow {
   return {
@@ -107,7 +110,7 @@ function toBackendRow(p: Product): BackendMenuRow {
     gradient: p.gradient,
     isCatering: p.isCatering,
     addons: p.addons,
-    photo: p.photo?.startsWith("http") ? p.photo : undefined,
+    photo: p.photo?.startsWith("data:") ? undefined : p.photo,
   };
 }
 
