@@ -15,9 +15,6 @@ export default function ItemModal({ product }: { product: Product }) {
   const { rules } = useStoreConfig();
   const isBulkPriced = product.price < rules.bulkMaxPrice;
 
-  // Mix and match: the bulk minimum is checked against the combined quantity of
-  // every under-$10 item in the cart (see CartContext), not this one item alone,
-  // so there's no per-item floor here -- just the normal floor of 1.
   const [qty, setQty] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, Addon>>({});
   const [eventDate, setEventDate] = useState("");
@@ -81,9 +78,7 @@ export default function ItemModal({ product }: { product: Product }) {
       </div>
 
       {isBulkPriced && (
-        <p className="text-xs text-brand-gold-dark">
-          {t.bulk_min_note(rules.bulkMinQty, rules.bulkFreeDeliveryQty)}
-        </p>
+        <p className="text-xs text-brand-gold-dark">{t.bulk_free_delivery_note(rules.bulkFreeDeliveryQty)}</p>
       )}
 
       {product.addons.map((addon) => (

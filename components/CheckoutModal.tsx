@@ -34,8 +34,6 @@ export default function CheckoutModal() {
     deliveryFeeWaived,
     discountAmount,
     orderTotal,
-    bulkMinMet,
-    bulkMinRemaining,
   } = useCart();
   const { locale, t } = useLocale();
   const { addOrder } = useOrders();
@@ -64,7 +62,7 @@ export default function CheckoutModal() {
 
   function handleSend() {
     setTouched(true);
-    if (!name.trim() || !phone.trim() || !whatsappConfigured || !bulkMinMet) return;
+    if (!name.trim() || !phone.trim() || !whatsappConfigured) return;
 
     const lines: string[] = [];
     lines.push(t.wa_order_title);
@@ -323,10 +321,8 @@ export default function CheckoutModal() {
         {touched && !whatsappConfigured && (
           <p className="mt-3 text-xs text-brand-danger">{t.whatsapp_not_configured}</p>
         )}
-        {!bulkMinMet && <p className="mt-3 text-xs text-brand-danger">{t.bulk_min_remaining(bulkMinRemaining)}</p>}
         <button
           type="button"
-          disabled={!bulkMinMet}
           onClick={handleSend}
           className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-50"
         >

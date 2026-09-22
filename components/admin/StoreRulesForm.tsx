@@ -11,7 +11,6 @@ export default function StoreRulesForm() {
   const { rules, updateRules, endpointOutdated } = useStoreConfig();
   const [deliveryFee, setDeliveryFee] = useState(String(rules.deliveryFee));
   const [bulkMaxPrice, setBulkMaxPrice] = useState(String(rules.bulkMaxPrice));
-  const [bulkMinQty, setBulkMinQty] = useState(String(rules.bulkMinQty));
   const [bulkFreeDeliveryQty, setBulkFreeDeliveryQty] = useState(String(rules.bulkFreeDeliveryQty));
   const [whatsappNumbers, setWhatsappNumbers] = useState(rules.whatsappNumbers);
   const [newNumber, setNewNumber] = useState("");
@@ -38,7 +37,6 @@ export default function StoreRulesForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDeliveryFee(String(rules.deliveryFee));
     setBulkMaxPrice(String(rules.bulkMaxPrice));
-    setBulkMinQty(String(rules.bulkMinQty));
     setBulkFreeDeliveryQty(String(rules.bulkFreeDeliveryQty));
     setWhatsappNumbers(rules.whatsappNumbers);
     setSocialTiktok(rules.socialTiktok);
@@ -134,7 +132,6 @@ export default function StoreRulesForm() {
       ...rules,
       deliveryFee: Number(deliveryFee) || 0,
       bulkMaxPrice: Number(bulkMaxPrice) || 0,
-      bulkMinQty: Math.max(1, Math.round(Number(bulkMinQty) || 1)),
       bulkFreeDeliveryQty: Math.max(1, Math.round(Number(bulkFreeDeliveryQty) || 1)),
       whatsappNumbers: whatsappNumbers.length ? whatsappNumbers : rules.whatsappNumbers,
       socialTiktok: socialTiktok.trim(),
@@ -186,20 +183,6 @@ export default function StoreRulesForm() {
           step="0.01"
           value={bulkMaxPrice}
           onChange={(e) => setBulkMaxPrice(e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
-        />
-      </div>
-      <div>
-        <label htmlFor="r-minqty" className="mb-1 block text-xs font-medium text-foreground-soft">
-          Cantidad minima por pedido (combinando articulos, mezcla y combina)
-        </label>
-        <input
-          id="r-minqty"
-          type="number"
-          min="1"
-          step="1"
-          value={bulkMinQty}
-          onChange={(e) => setBulkMinQty(e.target.value)}
           className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
         />
       </div>

@@ -21,7 +21,7 @@ type CartContextValue = {
   closeModal: () => void;
   addLine: (line: Omit<CartLine, "cartId">) => void;
   removeLine: (cartId: string) => void;
-  /** Clamped to the line's bulk minimum (if it's a bulk-priced item) or 1. */
+  /** Setting to 0 or below removes the line. */
   updateLineQty: (cartId: string, qty: number) => void;
   clearCart: () => void;
   lineTotal: (line: CartLine) => number;
@@ -40,12 +40,10 @@ type CartContextValue = {
 
   /** Combined quantity of every under-$10 (bulk-priced) line in the cart. */
   bulkQtyInCart: number;
-  /** True when there are no bulk-priced lines, or their combined quantity meets the minimum. */
-  bulkMinMet: boolean;
-  /** How many more (combined, mix and match) under-$10 items are needed to meet the minimum. */
-  bulkMinRemaining: number;
   /** Waived when the combined quantity of under-$10 items meets the free-delivery threshold. */
   deliveryFeeWaived: boolean;
+  /** How many more (combined, mix and match) under-$10 items are needed for free delivery. 0 once earned. */
+  freeDeliveryRemaining: number;
   deliveryFeeAmount: number;
   discountAmount: number;
   /** cartTotal - discountAmount + deliveryFeeAmount */
@@ -87,9 +85,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prev) => prev.filter((l) => l.cartId !== cartId));
   }, []);
 
-  // Mix and match: a single line has no minimum of its own anymore (the combined
-  // total across under-$10 lines is what has to clear rules.bulkMinQty, checked at
-  // checkout) -- so here a line just can't go below 1, and dropping to 0 removes it.
+  // A line just can't go below 1 (there's no order minimum); dropping to 0 removes it.
   const updateLineQty = useCallback((cartId: string, qty: number) => {
     if (qty <= 0) {
       setCart((prev) => prev.filter((l) => l.cartId !== cartId));
@@ -128,23 +124,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cartCount = useMemo(() => cart.reduce((sum, l) => sum + l.qty, 0), [cart]);
   const hasCatering = useMemo(() => cart.some((l) => l.isCatering), [cart]);
 
-  // Mix and match: the under-$10 minimum and the free-delivery threshold are both
-  // counted across the COMBINED quantity of every under-$10 line, not per item --
-  // 2 of one and 3 of another satisfies a minimum of 5 just like 5 of one does.
+  // Mix and match: the free-delivery threshold is counted across the COMBINED
+  // quantity of every under-$10 line, not per item -- 2 of one and 3 of another
+  // earns it just like 5 of one does. There is no order minimum: any quantity
+  // can check out, this only decides whether delivery is free.
   const bulkQtyInCart = useMemo(
     () =>
       cart.reduce((sum, l) => (l.unitPrice < rules.bulkMaxPrice ? sum + l.qty : sum), 0),
     [cart, rules.bulkMaxPrice]
   );
-  // No under-$10 items at all means the minimum doesn't apply; having some means
-  // their combined quantity must clear it.
-  const bulkMinMet = bulkQtyInCart === 0 || bulkQtyInCart >= rules.bulkMinQty;
-  const bulkMinRemaining = Math.max(0, rules.bulkMinQty - bulkQtyInCart);
 
   const deliveryFeeWaived = useMemo(
     () => bulkQtyInCart >= rules.bulkFreeDeliveryQty,
     [bulkQtyInCart, rules.bulkFreeDeliveryQty]
   );
+  const freeDeliveryRemaining = Math.max(0, rules.bulkFreeDeliveryQty - bulkQtyInCart);
 
   const deliveryFeeAmount = useMemo(() => {
     if (fulfillment !== "delivery" || hasCatering) return 0;
@@ -186,9 +180,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     applyPromoCode,
     clearPromoCode,
     bulkQtyInCart,
-    bulkMinMet,
-    bulkMinRemaining,
     deliveryFeeWaived,
+    freeDeliveryRemaining,
     deliveryFeeAmount,
     discountAmount,
     orderTotal,

@@ -8,8 +8,18 @@ import Overlay from "./Overlay";
 import ProductThumb from "./ProductThumb";
 
 export default function CartModal() {
-  const { cart, removeLine, updateLineQty, lineTotal, cartTotal, bulkMinMet, bulkMinRemaining, closeModal, openCheckout } =
-    useCart();
+  const {
+    cart,
+    removeLine,
+    updateLineQty,
+    lineTotal,
+    cartTotal,
+    bulkQtyInCart,
+    deliveryFeeWaived,
+    freeDeliveryRemaining,
+    closeModal,
+    openCheckout,
+  } = useCart();
   const { t, translateProduct } = useLocale();
   const { findProduct } = useMenu();
 
@@ -80,12 +90,14 @@ export default function CartModal() {
         </span>
       </div>
 
-      {!bulkMinMet && (
-        <p className="mt-3 text-xs text-brand-danger">{t.bulk_min_remaining(bulkMinRemaining)}</p>
+      {bulkQtyInCart > 0 && (
+        <p className="mt-3 text-xs text-brand-gold-dark">
+          {deliveryFeeWaived ? t.bulk_free_delivery_earned : t.bulk_free_delivery_remaining(freeDeliveryRemaining)}
+        </p>
       )}
       <button
         type="button"
-        disabled={cart.length === 0 || !bulkMinMet}
+        disabled={cart.length === 0}
         onClick={openCheckout}
         className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-50"
       >

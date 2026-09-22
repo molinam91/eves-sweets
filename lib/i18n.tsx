@@ -22,8 +22,9 @@ type UIStrings = {
   subtotal: string;
   add_to_cart: string;
   cancel: string;
-  bulk_min_note: (min: number, freeQty: number) => string;
-  bulk_min_remaining: (remaining: number) => string;
+  bulk_free_delivery_note: (freeQty: number) => string;
+  bulk_free_delivery_remaining: (remaining: number) => string;
+  bulk_free_delivery_earned: string;
   your_cart: string;
   cart_empty: string;
   remove: string;
@@ -157,10 +158,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     subtotal: "Subtotal",
     add_to_cart: "Add to cart",
     cancel: "Cancel",
-    bulk_min_note: (min: number, freeQty: number) =>
-      `Mix and match: minimum ${min} combined from these items per order. ${freeQty} combined gets free delivery.`,
-    bulk_min_remaining: (remaining: number) =>
-      `Add ${remaining} more of these items (mix and match) to reach the order minimum.`,
+    bulk_free_delivery_note: (freeQty: number) =>
+      `Mix and match: add ${freeQty} combined from these items to get free delivery.`,
+    bulk_free_delivery_remaining: (remaining: number) =>
+      `Add ${remaining} more of these items (mix and match) to get free delivery!`,
+    bulk_free_delivery_earned: "Free delivery unlocked! 🎉",
     your_cart: "Your cart",
     cart_empty: "Your cart is empty. Pick something delicious 🧁",
     remove: "Remove",
@@ -300,10 +302,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     subtotal: "Subtotal",
     add_to_cart: "Agregar al carrito",
     cancel: "Cancelar",
-    bulk_min_note: (min: number, freeQty: number) =>
-      `Mezcla y combina: minimo ${min} combinados entre estos articulos por pedido. Con ${freeQty} combinados, envio gratis.`,
-    bulk_min_remaining: (remaining: number) =>
-      `Agrega ${remaining} mas de estos articulos (mezclando) para llegar al minimo del pedido.`,
+    bulk_free_delivery_note: (freeQty: number) =>
+      `Mezcla y combina: agrega ${freeQty} combinados entre estos articulos para envio gratis.`,
+    bulk_free_delivery_remaining: (remaining: number) =>
+      `Agrega ${remaining} mas de estos articulos (mezclando) para envio gratis!`,
+    bulk_free_delivery_earned: "¡Envio gratis desbloqueado! 🎉",
     your_cart: "Tu carrito",
     cart_empty: "Tu carrito esta vacio. Elige algo delicioso 🧁",
     remove: "Quitar",
