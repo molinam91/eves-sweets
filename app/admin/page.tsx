@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import PromoFormModal from "@/components/admin/PromoFormModal";
+import QrCodeCard from "@/components/admin/QrCodeCard";
 import StoreRulesForm from "@/components/admin/StoreRulesForm";
 import { useLocale } from "@/context/LocaleContext";
 import { useMenu } from "@/context/MenuContext";
@@ -400,6 +401,8 @@ function AdminDashboard() {
         <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_settings}</h2>
         <StoreRulesForm />
       </div>
+
+      <QrCodeCard />
 
       {productModal && (
         <ProductFormModal

@@ -102,6 +102,10 @@ type UIStrings = {
   admin_active: string;
   admin_inactive: string;
   admin_settings: string;
+  admin_qr_title: string;
+  admin_qr_subtitle: string;
+  admin_qr_download: string;
+  admin_qr_error: string;
   admin_reset: string;
   admin_social_contact: string;
   admin_contact_email: string;
@@ -236,6 +240,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_active: "Active",
     admin_inactive: "Inactive",
     admin_settings: "Checkout settings",
+    admin_qr_title: "QR code",
+    admin_qr_subtitle: "Scan to open the site — post it on social media or WhatsApp.",
+    admin_qr_download: "Download PNG",
+    admin_qr_error: "Couldn't generate the QR code. Try reloading the page.",
     admin_reset: "Reset sample menu",
     admin_social_contact: "Social links & contact",
     admin_contact_email: "Contact email",
@@ -371,6 +379,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_active: "Activo",
     admin_inactive: "Inactivo",
     admin_settings: "Configuracion de pedidos",
+    admin_qr_title: "Codigo QR",
+    admin_qr_subtitle: "Escanea para abrir el sitio — publicalo en redes sociales o WhatsApp.",
+    admin_qr_download: "Descargar PNG",
+    admin_qr_error: "No se pudo generar el codigo QR. Intenta recargar la pagina.",
     admin_reset: "Restaurar menu de ejemplo",
     admin_social_contact: "Redes sociales y contacto",
     admin_contact_email: "Correo de contacto",
