@@ -7,6 +7,7 @@ type UIStrings = {
   cart_button: string;
   eyebrow: string;
   hero_tagline: string;
+  carousel_slides: string[];
   delivery_banner: (date: string) => React.ReactNode;
   menu_title: string;
   menu_subtitle: string;
@@ -55,6 +56,15 @@ type UIStrings = {
   delivery_fee_waived: string;
   discount_label: string;
   order_total: string;
+  wa_order_title: string;
+  wa_customer_label: string;
+  wa_delivery_label: string;
+  wa_pickup_label: string;
+  wa_event_label: string;
+  wa_payment_note: string;
+  wa_promo_label: string;
+  wa_notes_label: string;
+  wa_total_label: string;
   send_whatsapp: string;
   whatsapp_not_configured: string;
   back_to_cart: string;
@@ -73,7 +83,10 @@ type UIStrings = {
   admin_next_delivery: string;
   admin_weekly_summary: string;
   admin_no_sales_yet: string;
+  admin_day_labels: string[];
   admin_best_sellers: string;
+  admin_qty_sold: string;
+  admin_revenue: string;
   admin_menu_catering: string;
   admin_add_item: string;
   admin_edit: string;
@@ -112,6 +125,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     eyebrow: "Desserts and More",
     hero_tagline:
       "Homemade desserts made with love in Belmont, CA. Order for Friday delivery or pickup, or ask about your event.",
+    carousel_slides: ["Made fresh every week", "Friday deliveries", "Orders for events and catering"],
     delivery_banner: (date: string) => (
       <>
         Order before <b className="text-brand-pink-deep">Wednesday 4:00pm</b> and get it{" "}
@@ -173,6 +187,15 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     delivery_fee_waived: "Free delivery",
     discount_label: "Discount",
     order_total: "Order total",
+    wa_order_title: "New order — Eve's Sweets",
+    wa_customer_label: "Customer",
+    wa_delivery_label: "Delivery",
+    wa_pickup_label: "Pickup at the store",
+    wa_event_label: "Event",
+    wa_payment_note: "(we'll message you on WhatsApp to confirm payment)",
+    wa_promo_label: "Promo code",
+    wa_notes_label: "Notes",
+    wa_total_label: "Total",
     send_whatsapp: "Send order via WhatsApp",
     whatsapp_not_configured: "Ordering isn't set up yet — please contact the bakery directly.",
     back_to_cart: "Back to cart",
@@ -192,7 +215,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_next_delivery: "Next delivery",
     admin_weekly_summary: "Weekly sales summary",
     admin_no_sales_yet: "No sales yet this week.",
+    admin_day_labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     admin_best_sellers: "Best sellers",
+    admin_qty_sold: "Qty sold",
+    admin_revenue: "Revenue",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Add item",
     admin_edit: "Edit",
@@ -231,6 +257,7 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     eyebrow: "Desserts and More",
     hero_tagline:
       "Postres caseros hechos con amor en Belmont, CA. Pide para entrega el viernes o recoleccion, o cotiza tu evento.",
+    carousel_slides: ["Hecho fresco cada semana", "Entregas los viernes", "Pedidos para eventos y catering"],
     delivery_banner: (date: string) => (
       <>
         Pide antes del <b className="text-brand-pink-deep">miercoles 4:00pm</b> y recibe el{" "}
@@ -293,6 +320,15 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     delivery_fee_waived: "Entrega gratis",
     discount_label: "Descuento",
     order_total: "Total del pedido",
+    wa_order_title: "Pedido nuevo — Eve's Sweets",
+    wa_customer_label: "Cliente",
+    wa_delivery_label: "Entrega",
+    wa_pickup_label: "Recoleccion en tienda",
+    wa_event_label: "Evento",
+    wa_payment_note: "(te contactaremos por WhatsApp para confirmar el pago)",
+    wa_promo_label: "Codigo promocional",
+    wa_notes_label: "Notas",
+    wa_total_label: "Total",
     send_whatsapp: "Enviar pedido por WhatsApp",
     whatsapp_not_configured: "Los pedidos no estan configurados todavia — por favor contacta a la panaderia directamente.",
     back_to_cart: "Volver al carrito",
@@ -312,7 +348,10 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_next_delivery: "Proxima entrega",
     admin_weekly_summary: "Resumen de ventas semanales",
     admin_no_sales_yet: "Todavia no hay ventas esta semana.",
+    admin_day_labels: ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"],
     admin_best_sellers: "Mas vendido",
+    admin_qty_sold: "Cantidad vendida",
+    admin_revenue: "Ingresos",
     admin_menu_catering: "Menu & Catering",
     admin_add_item: "Agregar articulo",
     admin_edit: "Editar",

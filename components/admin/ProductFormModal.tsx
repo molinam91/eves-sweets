@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Overlay from "@/components/Overlay";
 import { useMenu, type ProductInput } from "@/context/MenuContext";
+import { uploadPhotoToBackend } from "@/lib/backend";
 import { money } from "@/lib/delivery";
 import { GRADIENT_PRESETS } from "@/lib/mockData";
+import { looksLikeDirectImageUrl, normalizePhotoUrl } from "@/lib/photoUrl";
 import { uniqueSlug } from "@/lib/slug";
 import type { Addon, Product } from "@/lib/types";
 
@@ -63,18 +65,54 @@ export default function ProductFormModal({
   const [addonPrice, setAddonPrice] = useState("");
   const [photo, setPhoto] = useState<string | undefined>(product?.photo);
   const [photoError, setPhotoError] = useState("");
+  const [photoUrlWarning, setPhotoUrlWarning] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState("");
+
+  function handlePhotoUrlChange(value: string) {
+    setPhotoError("");
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setPhoto(undefined);
+      setPhotoUrlWarning(false);
+      return;
+    }
+    const normalized = normalizePhotoUrl(trimmed);
+    setPhoto(normalized);
+    setPhotoUrlWarning(!looksLikeDirectImageUrl(normalized));
+  }
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     setPhotoError("");
+    setPhotoUrlWarning(false);
+    let localPhoto: string;
     try {
-      setPhoto(await readPhotoFile(file));
+      localPhoto = await readPhotoFile(file);
     } catch {
       setPhotoError("No se pudo cargar esa foto. Intenta con otra imagen.");
+      return;
     }
+    // Shown immediately (and kept if the upload below fails) so there's always
+    // a working preview even before/without the shared copy landing on Drive.
+    setPhoto(localPhoto);
+
+    setUploadingPhoto(true);
+    const hostedUrl = await uploadPhotoToBackend(localPhoto);
+    setUploadingPhoto(false);
+    setPhoto((current) => {
+      // Only swap in the hosted URL if the user hasn't since picked a different photo.
+      if (current !== localPhoto) return current;
+      if (!hostedUrl) {
+        setPhotoError(
+          "La foto se guardo solo en este dispositivo -- no se pudo subir para que la vean tus clientes. Revisa tu conexion e intenta de nuevo, o pega un link de foto."
+        );
+        return current;
+      }
+      return hostedUrl;
+    });
   }
 
   function handleAddAddon() {
@@ -195,7 +233,17 @@ export default function ProductFormModal({
         {photo && (
           <div className="mb-2 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element -- may be a data: URL, not worth next/image here */}
-            <img src={photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
+            <img
+              src={photo}
+              alt=""
+              className="h-16 w-16 rounded-xl object-cover"
+              onError={() =>
+                setPhotoError(
+                  "No se pudo cargar esta imagen. Revisa que el link sea directo a la foto (termina en .jpg, .png, etc), no a la pagina donde la viste."
+                )
+              }
+              onLoad={() => setPhotoError("")}
+            />
             <div>
               <button
                 type="button"
@@ -205,29 +253,18 @@ export default function ProductFormModal({
                 Quitar foto
               </button>
               <p className="mt-0.5 text-[11px] text-foreground-soft">
-                {photo.startsWith("http")
-                  ? "Visible para todos los clientes."
-                  : "Solo visible en este dispositivo (ver abajo)."}
+                {uploadingPhoto
+                  ? "Subiendo..."
+                  : photo.startsWith("http")
+                    ? "Visible para todos los clientes."
+                    : "Solo visible en este dispositivo (ver abajo)."}
               </p>
             </div>
           </div>
         )}
 
-        <label htmlFor="pf-photo-url" className="mb-1 block text-[11px] font-medium text-foreground-soft">
-          Opcion recomendada: pega el link de una foto (sube tu foto a imgur.com sin
-          necesidad de cuenta, copia el &quot;Direct link&quot; y pegalo aqui)
-        </label>
-        <input
-          id="pf-photo-url"
-          type="text"
-          value={photo?.startsWith("http") ? photo : ""}
-          onChange={(e) => setPhoto(e.target.value.trim() || undefined)}
-          placeholder="https://i.imgur.com/xxxxx.jpg"
-          className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
-        />
-
-        <p className="mb-1 mt-2.5 block text-[11px] font-medium text-foreground-soft">
-          O sube una foto desde este dispositivo (solo tu la veras, tus clientes no):
+        <p className="mb-1 block text-[11px] font-medium text-foreground-soft">
+          Sube una foto desde tu telefono o computadora:
         </p>
         <input
           type="file"
@@ -236,6 +273,24 @@ export default function ProductFormModal({
           className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
         />
         {photoError && <p className="mt-1.5 text-xs text-brand-danger">{photoError}</p>}
+
+        <label htmlFor="pf-photo-url" className="mb-1 mt-2.5 block text-[11px] font-medium text-foreground-soft">
+          O pega el link de una foto que ya este en algun sitio:
+        </label>
+        <input
+          id="pf-photo-url"
+          type="text"
+          value={photo?.startsWith("http") ? photo : ""}
+          onChange={(e) => handlePhotoUrlChange(e.target.value)}
+          placeholder="https://..."
+          className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm"
+        />
+        {photoUrlWarning && !photoError && (
+          <p className="mt-1 text-[11px] text-brand-danger">
+            Este link no parece apuntar directo a una imagen — si no se ve la foto arriba,
+            es porque este es el link de una pagina y no de la imagen.
+          </p>
+        )}
 
         <span className="mb-1 mt-3 block text-xs font-medium text-foreground-soft">
           Toppings / extras (opcional)
@@ -292,9 +347,10 @@ export default function ProductFormModal({
 
         <button
           type="submit"
-          className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark"
+          disabled={uploadingPhoto}
+          className="mt-4 w-full rounded-full bg-brand-pink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-50"
         >
-          {isEdit ? "Guardar cambios" : "Agregar al menu"}
+          {uploadingPhoto ? "Subiendo foto..." : isEdit ? "Guardar cambios" : "Agregar al menu"}
         </button>
         <button
           type="button"

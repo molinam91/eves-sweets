@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 
 type ThumbSource = {
@@ -15,10 +18,19 @@ export default function ProductThumb({
   className: string;
   sizes?: string;
 }) {
-  if (product.photo) {
+  const [failed, setFailed] = useState(false);
+
+  if (product.photo && !failed) {
     return (
       <div className={`relative overflow-hidden ${className}`}>
-        <Image src={product.photo} alt={product.name} fill sizes={sizes} className="object-cover" />
+        <Image
+          src={product.photo}
+          alt={product.name}
+          fill
+          sizes={sizes}
+          className="object-cover"
+          onError={() => setFailed(true)}
+        />
       </div>
     );
   }
