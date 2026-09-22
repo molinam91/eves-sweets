@@ -65,34 +65,34 @@ export default function CheckoutModal() {
     if (!name.trim() || !phone.trim() || !whatsappConfigured) return;
 
     const lines: string[] = [];
-    lines.push("Pedido nuevo — Eve's Sweets");
-    lines.push(`Cliente: ${name.trim()} (${phone.trim()})`);
+    lines.push(t.wa_order_title);
+    lines.push(`${t.wa_customer_label}: ${name.trim()} (${phone.trim()})`);
     cart.forEach((line) => {
       const addonsTxt = line.addons.length
         ? " + " + line.addons.map((a) => a.name).join(", ")
         : "";
-      const eventTxt = line.isCatering && line.eventDate ? ` [Evento: ${line.eventDate}]` : "";
+      const eventTxt = line.isCatering && line.eventDate ? ` [${t.wa_event_label}: ${line.eventDate}]` : "";
       lines.push(`- ${line.qty}x ${line.name}${addonsTxt}${eventTxt} — ${money(lineTotal(line))}`);
     });
     if (showFulfillment) {
       if (fulfillment === "delivery") {
-        lines.push(`Entrega: ${address.trim()} — ${friday}`);
+        lines.push(`${t.wa_delivery_label}: ${address.trim()} — ${friday}`);
         lines.push(
-          deliveryFeeWaived || deliveryFeeAmount === 0
-            ? "Costo de entrega: gratis"
-            : `Costo de entrega: ${money(deliveryFeeAmount)}`
+          `${t.delivery_fee_label}: ${
+            deliveryFeeWaived || deliveryFeeAmount === 0 ? t.delivery_fee_waived : money(deliveryFeeAmount)
+          }`
         );
       } else {
-        lines.push(`Recoleccion en tienda — ${friday}`);
+        lines.push(`${t.wa_pickup_label} — ${friday}`);
       }
     }
-    lines.push(`Pago: ${PAY_KEYS[payment]} (te contactaremos por WhatsApp para confirmar el pago)`);
+    lines.push(`${t.payment_method}: ${t[PAY_KEYS[payment]]} ${t.wa_payment_note}`);
     if (appliedPromo) {
-      lines.push(`Codigo promocional: ${appliedPromo.code} (-${money(discountAmount)})`);
+      lines.push(`${t.wa_promo_label}: ${appliedPromo.code} (-${money(discountAmount)})`);
     }
-    if (notes.trim()) lines.push(`Notas: ${notes.trim()}`);
-    lines.push(`Subtotal: ${money(cartTotal)}`);
-    lines.push(`Total: ${money(orderTotal)}`);
+    if (notes.trim()) lines.push(`${t.wa_notes_label}: ${notes.trim()}`);
+    lines.push(`${t.subtotal}: ${money(cartTotal)}`);
+    lines.push(`${t.wa_total_label}: ${money(orderTotal)}`);
 
     const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank", "noopener");

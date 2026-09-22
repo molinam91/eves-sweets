@@ -234,3 +234,19 @@ export function completeOrderInBackend(id: string) {
 export function clearOrdersInBackend() {
   return postBackend("clear_orders", {});
 }
+
+/**
+ * Uploads a photo to the store's own Drive (via the Apps Script backend) so a
+ * product photo works without a third-party image host. `dataUrl` is a
+ * `data:image/...;base64,...` URL (already resized/compressed client-side --
+ * see readPhotoFile in ProductFormModal). Returns the hosted, directly-loadable
+ * image URL on success, or null if the upload failed (offline, endpoint still
+ * on an older version without this action, Drive quota, etc).
+ */
+export async function uploadPhotoToBackend(dataUrl: string): Promise<string | null> {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  const [, mimeType, data] = match;
+  const result = await postBackend("upload_photo", { mimeType, data });
+  return typeof result?.url === "string" ? result.url : null;
+}

@@ -21,6 +21,7 @@ export const DEFAULT_MENU: Product[] = [
     description: "Flan casero cubierto con fresas frescas.",
     price: 28,
     gradient: ["#F06292", "#D84F7D"],
+    photo: "/menu/fresaflan.jpg",
     isCatering: false,
     addons: [],
   },
@@ -61,6 +62,7 @@ export const DEFAULT_MENU: Product[] = [
     description: "Pan casero de platano.",
     price: 12,
     gradient: ["#E8B84B", "#B23764"],
+    photo: "/menu/pan-de-banana.jpg",
     isCatering: false,
     addons: [],
   },
@@ -99,10 +101,11 @@ export const DEFAULT_CATERING: Product[] = [
   },
 ];
 
-export const CAROUSEL_SLIDES: { caption: string; gradient: [string, string] }[] = [
-  { caption: "Hecho fresco cada semana", gradient: ["#F06292", "#E8B84B"] },
-  { caption: "Entregas los viernes", gradient: ["#E8B84B", "#D84F7D"] },
-  { caption: "Pedidos para eventos y catering", gradient: ["#D84F7D", "#F06292"] },
+/** Gradients for the homepage carousel, in display order. Captions are bilingual and come from `t.carousel_slides` (see lib/i18n.tsx), zipped in by index. */
+export const CAROUSEL_GRADIENTS: [string, string][] = [
+  ["#F06292", "#E8B84B"],
+  ["#E8B84B", "#D84F7D"],
+  ["#D84F7D", "#F06292"],
 ];
 
 // Brand-color options for items added from /admin without a photo yet.

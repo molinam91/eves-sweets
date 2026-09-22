@@ -20,7 +20,7 @@ import {
 import { sha256Hex } from "@/lib/hash";
 import type { Product, PromoCode } from "@/lib/types";
 
-const DAY_LABELS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+const DAYS_PER_WEEK = 7;
 const SESSION_KEY = "eves-sweets-admin-unlocked";
 
 export default function AdminPage() {
@@ -134,7 +134,7 @@ function AdminDashboard() {
     const weekEnd = new Date(weekStart);
     weekEnd.setUTCDate(weekStart.getUTCDate() + 7);
 
-    const totals = DAY_LABELS.map(() => 0);
+    const totals = Array.from({ length: DAYS_PER_WEEK }, () => 0);
     let orderCount = 0;
     allOrders.forEach((order) => {
       const created = toPacificDate(order.createdAt);
@@ -148,7 +148,7 @@ function AdminDashboard() {
     setWeekStats({ totals, total: totals.reduce((sum, v) => sum + v, 0), orderCount });
   }, [allOrders]);
 
-  const weekTotals = weekStats?.totals ?? DAY_LABELS.map(() => 0);
+  const weekTotals = weekStats?.totals ?? Array.from({ length: DAYS_PER_WEEK }, () => 0);
   const totalWeek = weekStats?.total ?? 0;
   const hasSalesThisWeek = (weekStats?.total ?? 0) > 0;
   const maxVal = Math.max(1, ...weekTotals);
@@ -248,7 +248,7 @@ function AdminDashboard() {
         </div>
         {hasSalesThisWeek ? (
           <div className="flex h-36 items-end gap-2.5">
-            {DAY_LABELS.map((day, i) => (
+            {t.admin_day_labels.map((day, i) => (
               <div key={day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
                 <span className="text-[11px] tabular-nums text-foreground-soft">{money(weekTotals[i])}</span>
                 <div
@@ -272,9 +272,9 @@ function AdminDashboard() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
-                <th className="border-b border-border pb-2 font-medium">Articulo</th>
-                <th className="border-b border-border pb-2 font-medium">Cantidad vendida</th>
-                <th className="border-b border-border pb-2 font-medium">Ingresos</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_item}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_qty_sold}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_revenue}</th>
               </tr>
             </thead>
             <tbody>
@@ -288,7 +288,7 @@ function AdminDashboard() {
               {bestSellers.length === 0 && (
                 <tr>
                   <td colSpan={3} className="py-4 text-center text-xs text-foreground-soft">
-                    Sin ventas todavia.
+                    {t.admin_no_sales_yet}
                   </td>
                 </tr>
               )}
