@@ -1,4 +1,4 @@
-import type { Addon, Order, PromoCode, StoreRules } from "./types";
+import { PLACEHOLDER_WHATSAPP_NUMBER, type Addon, type Order, type PromoCode, type StoreRules } from "./types";
 
 /**
  * Google Apps Script Web App deployed from
@@ -97,7 +97,7 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
     whatsappNumbers:
       Array.isArray(c.whatsappNumbers) && c.whatsappNumbers.length
         ? c.whatsappNumbers.map((n) => asString(n)).filter(Boolean)
-        : ["15555555555"],
+        : [PLACEHOLDER_WHATSAPP_NUMBER],
     socialTiktok: asString(c.socialTiktok),
     socialInstagram: asString(c.socialInstagram),
     socialFacebook: asString(c.socialFacebook),

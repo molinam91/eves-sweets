@@ -6,7 +6,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { useOrders } from "@/context/OrderContext";
 import { useStoreConfig } from "@/context/StoreConfigContext";
 import { computeDeliveryFriday, formatDeliveryDate, money } from "@/lib/delivery";
-import type { PaymentMethod } from "@/lib/types";
+import { PLACEHOLDER_WHATSAPP_NUMBER, type PaymentMethod } from "@/lib/types";
 
 const PAY_KEYS: Record<PaymentMethod, "pay_zelle" | "pay_applepay" | "pay_cash"> = {
   zelle: "pay_zelle",
@@ -51,6 +51,9 @@ export default function CheckoutModal() {
   const friday = formatDeliveryDate(computeDeliveryFriday(), locale);
   const nameError = touched && !name.trim();
   const phoneError = touched && !phone.trim();
+  const whatsappNumber = rules.whatsappNumbers[0];
+  // Never a real send target -- the store owner hasn't configured a number yet.
+  const whatsappConfigured = Boolean(whatsappNumber) && whatsappNumber !== PLACEHOLDER_WHATSAPP_NUMBER;
 
   function handleApplyPromo() {
     if (!promoInput.trim()) return;
@@ -59,7 +62,7 @@ export default function CheckoutModal() {
 
   function handleSend() {
     setTouched(true);
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || !whatsappConfigured) return;
 
     const lines: string[] = [];
     lines.push("Pedido nuevo — Eve's Sweets");
@@ -91,7 +94,7 @@ export default function CheckoutModal() {
     lines.push(`Subtotal: ${money(cartTotal)}`);
     lines.push(`Total: ${money(orderTotal)}`);
 
-    const waUrl = `https://wa.me/${rules.whatsappNumbers[0]}?text=${encodeURIComponent(lines.join("\n"))}`;
+    const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank", "noopener");
 
     addOrder({
@@ -315,6 +318,9 @@ export default function CheckoutModal() {
           </div>
         </div>
 
+        {touched && !whatsappConfigured && (
+          <p className="mt-3 text-xs text-brand-danger">{t.whatsapp_not_configured}</p>
+        )}
         <button
           type="button"
           onClick={handleSend}

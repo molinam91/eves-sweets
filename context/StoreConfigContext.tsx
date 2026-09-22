@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { fetchBackendSnapshot, saveConfigToBackend, savePromosToBackend } from "@/lib/backend";
-import type { PromoCode, StoreRules } from "@/lib/types";
+import { PLACEHOLDER_WHATSAPP_NUMBER, type PromoCode, type StoreRules } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-store-config-v1";
 
@@ -11,7 +11,7 @@ export const DEFAULT_RULES: StoreRules = {
   bulkMaxPrice: 10,
   bulkMinQty: 5,
   bulkFreeDeliveryQty: 5,
-  whatsappNumbers: ["15555555555"], // placeholder -- Jayro to provide the real business number
+  whatsappNumbers: [PLACEHOLDER_WHATSAPP_NUMBER], // Jayro to provide the real business number
   socialTiktok: "",
   socialInstagram: "",
   socialFacebook: "",
