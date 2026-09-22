@@ -48,14 +48,15 @@ const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo])
 // specific entry (e.g. "fitness" banana bread) must come before a more generic one that
 // would otherwise also match it (plain "banana" + "bread").
 const DEFAULT_PHOTO_BY_NAME_TOKENS: { tokens: string[]; photo: string }[] = [
-  { tokens: ["gelatina", "party"], photo: "/menu/gelatina-mosaico-party-size.jpg" },
+  { tokens: ["party", "gelatin"], photo: "/menu/gelatina-mosaico-party-size.jpg" },
   { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg?v=2" },
   { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg?v=2" },
   { tokens: ["garlic"], photo: "/menu/garlic-cheese-loaf.jpg" },
   { tokens: ["cinnamon"], photo: "/menu/cinnamon-swirl.jpg" },
-  { tokens: ["chocolate", "swirl"], photo: "/menu/chocolate-swirl.jpg" },
   { tokens: ["chocolate", "muffin"], photo: "/menu/chocolate-chip-banana-muffins.jpg" },
-  { tokens: ["mexican", "cheesecake"], photo: "/menu/mexican-cheesecake.jpg" },
+  { tokens: ["chocolate"], photo: "/menu/chocolate-swirl.jpg" },
+  { tokens: ["swirl"], photo: "/menu/chocolate-swirl.jpg" },
+  { tokens: ["mexican"], photo: "/menu/mexican-cheesecake.jpg" },
   { tokens: ["fitness", "banana"], photo: "/menu/fitness-banana-bread.jpg" },
   { tokens: ["banana", "bread"], photo: "/menu/banana-bread.jpg" },
 ];
@@ -148,7 +149,14 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
         // A shared photo URL from the sheet wins; otherwise keep this device's
         // local-only upload (never sent to the backend, so it never comes back);
         // otherwise fall back to the item's own bundled stock photo, if it has one.
-        const localPhotoById = new Map(prev.map((p) => [p.id, p.photo]));
+        // Only a data: URL (from the admin file picker) is a genuine local upload --
+        // a "/menu/..." value here is just this device's own cached copy of a past
+        // bundled-default resolution, which must NOT outlive the bundled file it
+        // pointed to (otherwise swapping that file for a new version, same filename,
+        // never reaches a returning device: its stale localStorage entry wins forever).
+        const localPhotoById = new Map(
+          prev.filter((p) => p.photo?.startsWith("data:")).map((p) => [p.id, p.photo])
+        );
         return snapshot.menu.map((item) => ({
           ...item,
           photo:
