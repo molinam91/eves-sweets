@@ -19,7 +19,7 @@ import {
   toPacificDate,
 } from "@/lib/delivery";
 import { sha256Hex } from "@/lib/hash";
-import type { Product, PromoCode } from "@/lib/types";
+import type { Order, Product, PromoCode } from "@/lib/types";
 
 const DAYS_PER_WEEK = 7;
 const SESSION_KEY = "eves-sweets-admin-unlocked";
@@ -107,7 +107,7 @@ function AdminDashboard() {
   const { locale, t, toggleLocale } = useLocale();
   const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
   const { promoCodes, deletePromoCode } = useStoreConfig();
-  const { allOrders, clearOrders } = useOrders();
+  const { allOrders, deleteOrder, clearOrders } = useOrders();
   const [resettingSales, setResettingSales] = useState(false);
 
   const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
@@ -208,6 +208,12 @@ function AdminDashboard() {
     }
   }
 
+  function handleDeleteOrder(order: Order) {
+    if (window.confirm(`${t.admin_delete} #${order.id} (${order.customerName})?`)) {
+      deleteOrder(order.id);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -290,6 +296,51 @@ function AdminDashboard() {
                 <tr>
                   <td colSpan={3} className="py-4 text-center text-xs text-foreground-soft">
                     {t.admin_no_sales_yet}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_orders_title}</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
+                <th className="border-b border-border pb-2 font-medium">ID</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_order_customer}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_order_date}</th>
+                <th className="border-b border-border pb-2 font-medium">{t.admin_order_total}</th>
+                <th className="border-b border-border pb-2 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              {allOrders.map((order) => (
+                <tr key={order.id}>
+                  <td className="border-b border-border py-2.5 tabular-nums">{order.id}</td>
+                  <td className="border-b border-border py-2.5">{order.customerName}</td>
+                  <td className="border-b border-border py-2.5">
+                    {formatDeliveryDate(new Date(order.createdAt), locale)}
+                  </td>
+                  <td className="border-b border-border py-2.5 tabular-nums">{money(order.total)}</td>
+                  <td className="border-b border-border py-2.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOrder(order)}
+                      className="text-xs underline text-brand-danger"
+                    >
+                      {t.admin_delete}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {allOrders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center text-xs text-foreground-soft">
+                    {t.admin_no_orders}
                   </td>
                 </tr>
               )}

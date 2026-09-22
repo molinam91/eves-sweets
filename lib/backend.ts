@@ -235,6 +235,11 @@ export function clearOrdersInBackend() {
   return postBackend("clear_orders", {});
 }
 
+/** Deletes a single order (e.g. a test order), leaving every other order untouched. */
+export function deleteOrderInBackend(id: string) {
+  return postBackend("delete_order", { id });
+}
+
 /**
  * Uploads a photo to the store's own Drive (via the Apps Script backend) so a
  * product photo works without a third-party image host. `dataUrl` is a

@@ -106,6 +106,7 @@ function doPost(e) {
     else if (action === "add_order") result = addOrder_(payload);
     else if (action === "complete_order") result = setOrderStatus_(payload.id, "completed");
     else if (action === "clear_orders") result = clearOrders_();
+    else if (action === "delete_order") result = deleteOrder_(payload.id);
     else return respond_({ error: "unknown action: " + action });
   } catch (err) {
     return respond_({ error: String(err) });
@@ -289,6 +290,23 @@ function clearOrders_() {
     throw new Error("clear_orders did not verify: rows remain after delete");
   }
   return { ok: true, removed: removed };
+}
+
+/** Deletes a single order row by id (e.g. a test order). Leaves every other row untouched. */
+function deleteOrder_(id) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ensureSheet_(ss, TABS.ORDERS, ORDER_HEADERS);
+  var idCol = ORDER_HEADERS.indexOf("id") + 1;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: false, error: "no orders" };
+  var ids = sheet.getRange(2, idCol, lastRow - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(id)) {
+      sheet.deleteRow(i + 2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: "order not found: " + id };
 }
 
 function setOrderStatus_(id, status) {

@@ -1,7 +1,13 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { addOrderToBackend, clearOrdersInBackend, completeOrderInBackend, fetchBackendSnapshot } from "@/lib/backend";
+import {
+  addOrderToBackend,
+  clearOrdersInBackend,
+  completeOrderInBackend,
+  deleteOrderInBackend,
+  fetchBackendSnapshot,
+} from "@/lib/backend";
 import type { Order } from "@/lib/types";
 
 const STORAGE_KEY = "eves-sweets-orders-v1";
@@ -15,6 +21,8 @@ type OrderContextValue = {
   findOrder: (id: string) => Order | undefined;
   addOrder: (order: Omit<Order, "id" | "createdAt" | "status">) => Order;
   completeOrder: (id: string) => void;
+  /** Deletes one order (e.g. a test order), leaving every other order untouched. */
+  deleteOrder: (id: string) => void;
   /** Deletes every recorded order (sales/best-sellers reset). Resolves true once the shared Sheet confirms it's empty. */
   clearOrders: () => Promise<boolean>;
 };
@@ -122,6 +130,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     completeOrderInBackend(id);
   }, []);
 
+  const deleteOrder = useCallback((id: string) => {
+    setAllOrders((prev) => prev.filter((o) => o.id !== id));
+    deleteOrderInBackend(id);
+  }, []);
+
   const clearOrders = useCallback(async (): Promise<boolean> => {
     setAllOrders([]);
     const result = await clearOrdersInBackend();
@@ -131,7 +144,15 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const orders = useMemo(() => allOrders.filter((o) => o.status === "new"), [allOrders]);
   const findOrder = useCallback((id: string) => allOrders.find((o) => o.id === id), [allOrders]);
 
-  const value: OrderContextValue = { orders, allOrders, findOrder, addOrder, completeOrder, clearOrders };
+  const value: OrderContextValue = {
+    orders,
+    allOrders,
+    findOrder,
+    addOrder,
+    completeOrder,
+    deleteOrder,
+    clearOrders,
+  };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
 }

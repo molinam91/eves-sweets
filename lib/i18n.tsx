@@ -101,6 +101,11 @@ type UIStrings = {
   admin_status: string;
   admin_active: string;
   admin_inactive: string;
+  admin_orders_title: string;
+  admin_order_customer: string;
+  admin_order_date: string;
+  admin_order_total: string;
+  admin_no_orders: string;
   admin_settings: string;
   admin_qr_title: string;
   admin_qr_subtitle: string;
@@ -239,6 +244,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_status: "Status",
     admin_active: "Active",
     admin_inactive: "Inactive",
+    admin_orders_title: "Orders",
+    admin_order_customer: "Customer",
+    admin_order_date: "Date",
+    admin_order_total: "Total",
+    admin_no_orders: "No orders yet.",
     admin_settings: "Checkout settings",
     admin_qr_title: "QR code",
     admin_qr_subtitle: "Scan to open the site — post it on social media or WhatsApp.",
@@ -378,6 +388,11 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_status: "Estado",
     admin_active: "Activo",
     admin_inactive: "Inactivo",
+    admin_orders_title: "Pedidos",
+    admin_order_customer: "Cliente",
+    admin_order_date: "Fecha",
+    admin_order_total: "Total",
+    admin_no_orders: "Todavia no hay pedidos.",
     admin_settings: "Configuracion de pedidos",
     admin_qr_title: "Codigo QR",
     admin_qr_subtitle: "Escanea para abrir el sitio — publicalo en redes sociales o WhatsApp.",
