@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import OrderDetailModal from "@/components/admin/OrderDetailModal";
+import { useEffect, useMemo, useState } from "react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import PromoFormModal from "@/components/admin/PromoFormModal";
 import StoreRulesForm from "@/components/admin/StoreRulesForm";
@@ -19,7 +18,7 @@ import {
   toPacificDate,
 } from "@/lib/delivery";
 import { sha256Hex } from "@/lib/hash";
-import type { Order, Product, PromoCode } from "@/lib/types";
+import type { Product, PromoCode } from "@/lib/types";
 
 const DAY_LABELS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 const SESSION_KEY = "eves-sweets-admin-unlocked";
@@ -107,13 +106,12 @@ function AdminDashboard() {
   const { locale, t, toggleLocale } = useLocale();
   const { menu, catering, deleteProduct, resetToDefaults } = useMenu();
   const { promoCodes, deletePromoCode } = useStoreConfig();
-  const { orders, allOrders, completeOrder } = useOrders();
+  const { allOrders } = useOrders();
 
   const [productModal, setProductModal] = useState<{ category: "menu" | "catering"; product?: Product } | null>(
     null
   );
   const [promoModal, setPromoModal] = useState<{ promo?: PromoCode } | null>(null);
-  const [orderDetail, setOrderDetail] = useState<Order | null>(null);
 
   // Computed client-side only: on a statically exported page, doing this
   // directly in render would bake in the build-time date instead of "today".
@@ -124,7 +122,9 @@ function AdminDashboard() {
     setNextDeliveryLabel(formatDeliveryDate(computeDeliveryFriday(), locale));
   }, [locale]);
 
-  const [weekStats, setWeekStats] = useState<{ totals: number[]; total: number } | null>(null);
+  const [weekStats, setWeekStats] = useState<{ totals: number[]; total: number; orderCount: number } | null>(
+    null
+  );
   useEffect(() => {
     const todayPacific = pacificNow();
     const weekStart = new Date(todayPacific);
@@ -134,21 +134,40 @@ function AdminDashboard() {
     weekEnd.setDate(weekStart.getDate() + 7);
 
     const totals = DAY_LABELS.map(() => 0);
+    let orderCount = 0;
     allOrders.forEach((order) => {
       const created = toPacificDate(order.createdAt);
       if (created >= weekStart && created < weekEnd) {
         totals[mondayFirstIndex(created)] += order.total;
+        orderCount += 1;
       }
     });
     // Client-only: today's Pacific date determines the week window; must not run at build time.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setWeekStats({ totals, total: totals.reduce((sum, v) => sum + v, 0) });
+    setWeekStats({ totals, total: totals.reduce((sum, v) => sum + v, 0), orderCount });
   }, [allOrders]);
 
   const weekTotals = weekStats?.totals ?? DAY_LABELS.map(() => 0);
   const totalWeek = weekStats?.total ?? 0;
   const hasSalesThisWeek = (weekStats?.total ?? 0) > 0;
   const maxVal = Math.max(1, ...weekTotals);
+
+  // All-time, not just this week -- a new bakery shouldn't see this reset to empty every Monday.
+  const bestSellers = useMemo(() => {
+    const byItem = new Map<string, { qty: number; revenue: number }>();
+    allOrders.forEach((order) => {
+      order.items.forEach((item) => {
+        const entry = byItem.get(item.name) ?? { qty: 0, revenue: 0 };
+        entry.qty += item.qty;
+        entry.revenue += item.lineTotal;
+        byItem.set(item.name, entry);
+      });
+    });
+    return [...byItem.entries()]
+      .map(([name, stats]) => ({ name, ...stats }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 8);
+  }, [allOrders]);
 
   function handleDeleteProduct(product: Product) {
     if (window.confirm(`${t.admin_delete} "${product.name}"?`)) {
@@ -166,11 +185,6 @@ function AdminDashboard() {
     if (window.confirm(t.admin_reset + "?")) {
       resetToDefaults();
     }
-  }
-
-  function handleCompleteOrder(order: Order) {
-    completeOrder(order.id);
-    setOrderDetail(null);
   }
 
   return (
@@ -196,7 +210,7 @@ function AdminDashboard() {
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile label={t.admin_sales_week} value={money(totalWeek)} />
-        <StatTile label={t.admin_new_orders} value={String(orders.length)} />
+        <StatTile label={t.admin_orders_week} value={String(weekStats?.orderCount ?? 0)} />
         <StatTile label={t.admin_next_delivery} value={nextDeliveryLabel ?? "..."} small />
       </div>
 
@@ -223,59 +237,28 @@ function AdminDashboard() {
       </div>
 
       <div className="mb-5 rounded-3xl border border-border bg-surface p-5">
-        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_orders}</h2>
+        <h2 className="mb-3.5 text-sm font-semibold text-foreground">{t.admin_best_sellers}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wide text-foreground-soft">
-                <th className="border-b border-border pb-2 font-medium">ID</th>
-                <th className="border-b border-border pb-2 font-medium">Cliente</th>
-                <th className="border-b border-border pb-2 font-medium">Entrega</th>
-                <th className="border-b border-border pb-2 font-medium">Total</th>
-                <th className="border-b border-border pb-2 font-medium" />
+                <th className="border-b border-border pb-2 font-medium">Articulo</th>
+                <th className="border-b border-border pb-2 font-medium">Cantidad vendida</th>
+                <th className="border-b border-border pb-2 font-medium">Ingresos</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td className="border-b border-border py-2.5 align-top">#{order.id}</td>
-                  <td className="border-b border-border py-2.5 align-top">
-                    <button
-                      type="button"
-                      onClick={() => setOrderDetail(order)}
-                      className="text-left font-semibold text-brand-pink-deep underline"
-                    >
-                      {order.customerName}
-                    </button>
-                    <div className="text-xs text-foreground-soft">
-                      {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
-                    </div>
-                  </td>
-                  <td className="border-b border-border py-2.5 align-top">
-                    {order.hasCatering
-                      ? "Catering"
-                      : order.fulfillment === "delivery"
-                        ? order.address
-                        : "Recoleccion en tienda"}
-                  </td>
-                  <td className="border-b border-border py-2.5 align-top tabular-nums">
-                    {money(order.total)}
-                  </td>
-                  <td className="border-b border-border py-2.5 align-top text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleCompleteOrder(order)}
-                      className="text-xs underline text-foreground-soft"
-                    >
-                      Completar
-                    </button>
-                  </td>
+              {bestSellers.map((item) => (
+                <tr key={item.name}>
+                  <td className="border-b border-border py-2.5">{item.name}</td>
+                  <td className="border-b border-border py-2.5 tabular-nums">{item.qty}</td>
+                  <td className="border-b border-border py-2.5 tabular-nums">{money(item.revenue)}</td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {bestSellers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-xs text-foreground-soft">
-                    Sin pedidos nuevos todavia.
+                  <td colSpan={3} className="py-4 text-center text-xs text-foreground-soft">
+                    Sin ventas todavia.
                   </td>
                 </tr>
               )}
@@ -396,13 +379,6 @@ function AdminDashboard() {
         />
       )}
       {promoModal && <PromoFormModal promo={promoModal.promo} onClose={() => setPromoModal(null)} />}
-      {orderDetail && (
-        <OrderDetailModal
-          order={orderDetail}
-          onClose={() => setOrderDetail(null)}
-          onComplete={() => handleCompleteOrder(orderDetail)}
-        />
-      )}
     </div>
   );
 }
