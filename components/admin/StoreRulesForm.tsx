@@ -8,7 +8,7 @@ import { PLACEHOLDER_WHATSAPP_NUMBER } from "@/lib/types";
 
 export default function StoreRulesForm() {
   const { t } = useLocale();
-  const { rules, updateRules } = useStoreConfig();
+  const { rules, updateRules, endpointOutdated } = useStoreConfig();
   const [deliveryFee, setDeliveryFee] = useState(String(rules.deliveryFee));
   const [bulkMaxPrice, setBulkMaxPrice] = useState(String(rules.bulkMaxPrice));
   const [bulkMinQty, setBulkMinQty] = useState(String(rules.bulkMinQty));
@@ -151,6 +151,11 @@ export default function StoreRulesForm() {
 
   return (
     <form onSubmit={handleSave} className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+      {endpointOutdated && (
+        <p className="sm:col-span-2 rounded-xl bg-brand-danger/10 px-3 py-2 text-xs text-brand-danger">
+          {t.admin_endpoint_outdated}
+        </p>
+      )}
       {syncWarning && (
         <p className="sm:col-span-2 rounded-xl bg-brand-danger/10 px-3 py-2 text-xs text-brand-danger">
           {t.admin_sync_warning}
