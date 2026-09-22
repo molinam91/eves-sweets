@@ -21,6 +21,9 @@ type CartContextValue = {
   closeModal: () => void;
   addLine: (line: Omit<CartLine, "cartId">) => void;
   removeLine: (cartId: string) => void;
+  /** Clamped to the line's bulk minimum (if it's a bulk-priced item) or 1. */
+  updateLineQty: (cartId: string, qty: number) => void;
+  minQtyForLine: (line: CartLine) => number;
   clearCart: () => void;
   lineTotal: (line: CartLine) => number;
   /** Raw sum of line totals, before delivery fee or a promo discount. */
@@ -78,6 +81,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const removeLine = useCallback((cartId: string) => {
     setCart((prev) => prev.filter((l) => l.cartId !== cartId));
   }, []);
+
+  const minQtyForLine = useCallback(
+    (line: CartLine) => (line.unitPrice < rules.bulkMaxPrice ? rules.bulkMinQty : 1),
+    [rules.bulkMaxPrice, rules.bulkMinQty]
+  );
+
+  const updateLineQty = useCallback(
+    (cartId: string, qty: number) => {
+      setCart((prev) =>
+        prev.map((l) => (l.cartId === cartId ? { ...l, qty: Math.max(minQtyForLine(l), qty) } : l))
+      );
+    },
+    [minQtyForLine]
+  );
 
   const clearCart = useCallback(() => {
     setCart([]);
@@ -141,6 +158,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     closeModal,
     addLine,
     removeLine,
+    updateLineQty,
+    minQtyForLine,
     clearCart,
     lineTotal,
     cartTotal,

@@ -8,7 +8,7 @@ import Overlay from "./Overlay";
 import ProductThumb from "./ProductThumb";
 
 export default function CartModal() {
-  const { cart, removeLine, lineTotal, cartTotal, closeModal, openCheckout } = useCart();
+  const { cart, removeLine, updateLineQty, lineTotal, cartTotal, closeModal, openCheckout } = useCart();
   const { t, translateProduct } = useLocale();
   const { findProduct } = useMenu();
 
@@ -27,9 +27,7 @@ export default function CartModal() {
               <div key={line.cartId} className="flex gap-3 border-t border-border py-3 first:border-t-0">
                 <ProductThumb product={line} className="h-11 w-11 flex-shrink-0 rounded-xl" sizes="44px" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">
-                    {line.qty}x {displayName}
-                  </div>
+                  <div className="truncate text-sm font-semibold">{displayName}</div>
                   <div className="truncate text-xs text-foreground-soft">
                     {[
                       line.addons.map((a) => a.name).join(", "),
@@ -37,6 +35,25 @@ export default function CartModal() {
                     ]
                       .filter(Boolean)
                       .join(" · ")}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateLineQty(line.cartId, line.qty - 1)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-xs text-brand-pink-deep"
+                    >
+                      −
+                    </button>
+                    <span className="min-w-[14px] text-center text-xs font-semibold tabular-nums">
+                      {line.qty}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateLineQty(line.cartId, line.qty + 1)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-xs text-brand-pink-deep"
+                    >
+                      +
+                    </button>
                   </div>
                   <button
                     type="button"
