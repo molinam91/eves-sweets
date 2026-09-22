@@ -98,18 +98,23 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
             : [],
         };
       })
+      // Same reasoning as the orders filter below: a trailing formatted-but-empty
+      // sheet row has no real id or name and isn't a real menu item.
+      .filter((m) => m.id || m.name)
     : [];
 
   const promos = Array.isArray(d.promos)
-    ? d.promos.map((raw): PromoCode => {
-        const r = (raw ?? {}) as Record<string, unknown>;
-        return {
-          code: asIdString(r.code),
-          type: r.type === "fixed" ? "fixed" : "percent",
-          value: asNumber(r.value),
-          active: Boolean(r.active),
-        };
-      })
+    ? d.promos
+        .map((raw): PromoCode => {
+          const r = (raw ?? {}) as Record<string, unknown>;
+          return {
+            code: asIdString(r.code),
+            type: r.type === "fixed" ? "fixed" : "percent",
+            value: asNumber(r.value),
+            active: Boolean(r.active),
+          };
+        })
+        .filter((p) => p.code)
     : [];
 
   const c = (d.config ?? {}) as Record<string, unknown>;
@@ -173,6 +178,10 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
           status: r.status === "completed" ? "completed" : "new",
         };
       })
+      // A row with no id and no customer name isn't a real order -- Sheets'
+      // getLastRow() can over-count and include a trailing formatted-but-empty row,
+      // which would otherwise inject a phantom blank order into every single poll.
+      .filter((o) => o.id || o.customerName)
     : [];
 
   return { menu, promos, config, orders, endpointHasExtendedConfig };
