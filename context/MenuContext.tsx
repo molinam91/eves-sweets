@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { type BackendMenuRow, fetchBackendSnapshot, saveMenuToBackend } from "@/lib/backend";
 import { DEFAULT_CATERING, DEFAULT_MENU } from "@/lib/mockData";
 import { uniqueSlug } from "@/lib/slug";
@@ -76,6 +76,10 @@ function toBackendRow(p: Product): BackendMenuRow {
 
 export function MenuProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  // See StoreConfigContext's identical guard: the one-time initial fetch below can resolve
+  // after the admin already edited the menu (Apps Script can be slow), which would otherwise
+  // silently revert what they just saved.
+  const userEditedRef = useRef(false);
 
   // Hydrate from this browser's saved catalog after mount (SSR has no
   // localStorage, so the first render always matches the seed above).
@@ -103,7 +107,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     fetchBackendSnapshot().then((snapshot) => {
-      if (cancelled || !snapshot) return;
+      if (cancelled || !snapshot || userEditedRef.current) return;
       setProducts((prev) => {
         // A shared photo URL from the sheet wins; otherwise keep this device's
         // local-only upload (never sent to the backend, so it never comes back).
@@ -117,6 +121,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addProduct = useCallback((input: ProductInput): Product => {
+    userEditedRef.current = true;
     let created!: Product;
     let next!: Product[];
     setProducts((prev) => {
@@ -130,6 +135,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateProduct = useCallback((id: string, input: ProductInput) => {
+    userEditedRef.current = true;
     let next!: Product[];
     setProducts((prev) => {
       next = prev.map((p) => (p.id === id ? { ...p, ...input } : p));
@@ -139,6 +145,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteProduct = useCallback((id: string) => {
+    userEditedRef.current = true;
     let next!: Product[];
     setProducts((prev) => {
       next = prev.filter((p) => p.id !== id);
@@ -148,6 +155,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetToDefaults = useCallback(() => {
+    userEditedRef.current = true;
     setProducts(DEFAULT_PRODUCTS);
     saveMenuToBackend(DEFAULT_PRODUCTS.map(toBackendRow));
   }, []);
