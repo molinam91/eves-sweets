@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/context/LocaleContext";
 import { useStoreConfig } from "@/context/StoreConfigContext";
 import { sha256Hex } from "@/lib/hash";
@@ -23,8 +23,43 @@ export default function StoreRulesForm() {
   const [newContactPhone, setNewContactPhone] = useState("");
   const [saved, setSaved] = useState(false);
 
+  // `rules` hydrates asynchronously (localStorage, then the shared backend, which can
+  // take several seconds on a real Apps Script round trip) after this form's fields
+  // already mounted with whatever `rules` held at that instant -- often still the
+  // placeholder/blank defaults on a fresh page load. Without this, every field above
+  // stays frozen at its mount-time value forever, and the next unrelated Guardar click
+  // writes that stale snapshot back over real, already-saved data (this is what was
+  // silently deleting the WhatsApp number and the social/contact fields). Every update
+  // this form itself makes already sets local state and `rules` together, so this only
+  // ever pulls in a genuinely external change.
+  useEffect(() => {
+    // Resync from context whenever `rules` changes (see comment above) -- not a loop,
+    // since these setters don't feed back into `rules` themselves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDeliveryFee(String(rules.deliveryFee));
+    setBulkMaxPrice(String(rules.bulkMaxPrice));
+    setBulkMinQty(String(rules.bulkMinQty));
+    setBulkFreeDeliveryQty(String(rules.bulkFreeDeliveryQty));
+    setWhatsappNumbers(rules.whatsappNumbers);
+    setSocialTiktok(rules.socialTiktok);
+    setSocialInstagram(rules.socialInstagram);
+    setSocialFacebook(rules.socialFacebook);
+    setContactEmail(rules.contactEmail);
+    setContactPhones(rules.contactPhones);
+  }, [rules]);
+
   const [newPassword, setNewPassword] = useState("");
   const [passwordSaved, setPasswordSaved] = useState(false);
+  // Set whenever a save reports it did NOT really reach/land on the shared Sheet --
+  // distinct from "Guardado.", because the value is still kept locally in `rules`
+  // (never reverted to a placeholder), but other devices won't see it yet.
+  const [syncWarning, setSyncWarning] = useState(false);
+
+  async function trySave(next: typeof rules): Promise<boolean> {
+    const ok = await updateRules(next);
+    setSyncWarning(!ok);
+    return ok;
+  }
 
   function handleAddContactPhone() {
     const trimmed = newContactPhone.trim();
@@ -41,10 +76,12 @@ export default function StoreRulesForm() {
     const trimmed = newPassword.trim();
     if (!trimmed) return;
     const hash = await sha256Hex(trimmed);
-    updateRules({ ...rules, adminPasswordHash: hash });
+    const ok = await trySave({ ...rules, adminPasswordHash: hash });
     setNewPassword("");
-    setPasswordSaved(true);
-    setTimeout(() => setPasswordSaved(false), 2000);
+    if (ok) {
+      setPasswordSaved(true);
+      setTimeout(() => setPasswordSaved(false), 2000);
+    }
   }
 
   const [numbersSaved, setNumbersSaved] = useState(false);
@@ -52,13 +89,15 @@ export default function StoreRulesForm() {
   // A placeholder number is never worth keeping once a real one exists -- drops it so
   // the real number always lands at index 0 (primary), with no separate "make primary"
   // step a real number could otherwise be left stuck behind.
-  function persistNumbers(next: string[]) {
+  async function persistNumbers(next: string[]) {
     const real = next.filter((n) => n !== PLACEHOLDER_WHATSAPP_NUMBER);
     const final = real.length > 0 ? real : [PLACEHOLDER_WHATSAPP_NUMBER];
     setWhatsappNumbers(final);
-    updateRules({ ...rules, whatsappNumbers: final });
-    setNumbersSaved(true);
-    setTimeout(() => setNumbersSaved(false), 2000);
+    const ok = await trySave({ ...rules, whatsappNumbers: final });
+    if (ok) {
+      setNumbersSaved(true);
+      setTimeout(() => setNumbersSaved(false), 2000);
+    }
   }
 
   function handleAddNumber() {
@@ -89,9 +128,9 @@ export default function StoreRulesForm() {
     persistNumbers([chosen, ...next]);
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    updateRules({
+    const ok = await trySave({
       ...rules,
       deliveryFee: Number(deliveryFee) || 0,
       bulkMaxPrice: Number(bulkMaxPrice) || 0,
@@ -104,12 +143,19 @@ export default function StoreRulesForm() {
       contactEmail: contactEmail.trim(),
       contactPhones,
     });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   }
 
   return (
     <form onSubmit={handleSave} className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+      {syncWarning && (
+        <p className="sm:col-span-2 rounded-xl bg-brand-danger/10 px-3 py-2 text-xs text-brand-danger">
+          {t.admin_sync_warning}
+        </p>
+      )}
       <div>
         <label htmlFor="r-fee" className="mb-1 block text-xs font-medium text-foreground-soft">
           Costo de entrega (USD)
