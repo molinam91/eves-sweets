@@ -44,9 +44,19 @@ const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo])
  * can't key on their id). Matched by the tokens in the item's own name instead -- Jayro
  * confirmed each photo he sent is named after an existing menu item, not a new one.
  */
+// Order matters: DEFAULT_PHOTO_BY_NAME_TOKENS.find() takes the first match, so a more
+// specific entry (e.g. "fitness" banana bread) must come before a more generic one that
+// would otherwise also match it (plain "banana" + "bread").
 const DEFAULT_PHOTO_BY_NAME_TOKENS: { tokens: string[]; photo: string }[] = [
   { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg" },
   { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg" },
+  { tokens: ["garlic"], photo: "/menu/garlic-cheese-loaf.jpg" },
+  { tokens: ["cinnamon"], photo: "/menu/cinnamon-swirl.jpg" },
+  { tokens: ["chocolate", "swirl"], photo: "/menu/chocolate-swirl.jpg" },
+  { tokens: ["chocolate", "muffin"], photo: "/menu/chocolate-chip-banana-muffins.jpg" },
+  { tokens: ["mexican", "cheesecake"], photo: "/menu/mexican-cheesecake.jpg" },
+  { tokens: ["fitness", "banana"], photo: "/menu/fitness-banana-bread.jpg" },
+  { tokens: ["banana", "bread"], photo: "/menu/banana-bread.jpg" },
 ];
 
 function defaultPhotoByName(name: string): string | undefined {
