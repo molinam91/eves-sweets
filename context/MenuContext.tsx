@@ -49,8 +49,8 @@ const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo])
 // would otherwise also match it (plain "banana" + "bread").
 const DEFAULT_PHOTO_BY_NAME_TOKENS: { tokens: string[]; photo: string }[] = [
   { tokens: ["gelatina", "party"], photo: "/menu/gelatina-mosaico-party-size.jpg" },
-  { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg" },
-  { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg" },
+  { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg?v=2" },
+  { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg?v=2" },
   { tokens: ["garlic"], photo: "/menu/garlic-cheese-loaf.jpg" },
   { tokens: ["cinnamon"], photo: "/menu/cinnamon-swirl.jpg" },
   { tokens: ["chocolate", "swirl"], photo: "/menu/chocolate-swirl.jpg" },
