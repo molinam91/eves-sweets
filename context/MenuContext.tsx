@@ -32,6 +32,12 @@ const MenuContext = createContext<MenuContextValue | null>(null);
 
 const DEFAULT_PRODUCTS = [...DEFAULT_MENU, ...DEFAULT_CATERING];
 
+// The site's own bundled stock photos (public/menu/*.jpg), keyed by product id.
+// Neither localStorage (which can predate a given photo being added to the
+// codebase) nor the sheet (which never carries these) has these, so without
+// this fallback a bundled photo can vanish behind an older cached snapshot.
+const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo]));
+
 /**
  * This browser's own saved catalog can predate a fix (or come from a moment
  * when the shared backend returned something odd), so a stale null/NaN price
@@ -110,9 +116,13 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       if (cancelled || !snapshot || userEditedRef.current) return;
       setProducts((prev) => {
         // A shared photo URL from the sheet wins; otherwise keep this device's
-        // local-only upload (never sent to the backend, so it never comes back).
+        // local-only upload (never sent to the backend, so it never comes back);
+        // otherwise fall back to the item's own bundled stock photo, if it has one.
         const localPhotoById = new Map(prev.map((p) => [p.id, p.photo]));
-        return snapshot.menu.map((item) => ({ ...item, photo: item.photo || localPhotoById.get(item.id) }));
+        return snapshot.menu.map((item) => ({
+          ...item,
+          photo: item.photo || localPhotoById.get(item.id) || DEFAULT_PHOTO_BY_ID.get(item.id),
+        }));
       });
     });
     return () => {
