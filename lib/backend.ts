@@ -54,6 +54,20 @@ function asString(v: unknown, fallback = ""): string {
 }
 
 /**
+ * Like asString, but also accepts a number -- Sheets silently stores a numeric-looking
+ * cell (e.g. an order id written as the text "0003") as an actual number, dropping any
+ * leading zeros. Reading that back with asString alone would return "" for every id
+ * (since it's no longer typeof "string"), collapsing every order onto the same blank
+ * key: they'd all look identical to any code that compares or dedupes by id, which is
+ * what made every order landing in the shared Sheet appear duplicated on admin's device.
+ */
+function asIdString(v: unknown, fallback = ""): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return fallback;
+}
+
+/**
  * The Sheet is hand-editable, so a row can arrive with the wrong type in any
  * cell (text where a number was expected, a missing column, etc). This
  * coerces every field to a safe shape so a malformed row degrades quietly
@@ -69,7 +83,7 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
         const r = (raw ?? {}) as Record<string, unknown>;
         const gradient = Array.isArray(r.gradient) ? r.gradient : [];
         return {
-          id: asString(r.id),
+          id: asIdString(r.id),
           name: asString(r.name),
           description: asString(r.description),
           price: asNumber(r.price),
@@ -79,7 +93,7 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
           addons: Array.isArray(r.addons)
             ? r.addons.map((a) => {
                 const addon = (a ?? {}) as Record<string, unknown>;
-                return { id: asString(addon.id), name: asString(addon.name), price: asNumber(addon.price) };
+                return { id: asIdString(addon.id), name: asString(addon.name), price: asNumber(addon.price) };
               })
             : [],
         };
@@ -90,7 +104,7 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
     ? d.promos.map((raw): PromoCode => {
         const r = (raw ?? {}) as Record<string, unknown>;
         return {
-          code: asString(r.code),
+          code: asIdString(r.code),
           type: r.type === "fixed" ? "fixed" : "percent",
           value: asNumber(r.value),
           active: Boolean(r.active),
@@ -127,7 +141,7 @@ function sanitizeSnapshot(data: unknown): BackendSnapshot | null {
         const r = (raw ?? {}) as Record<string, unknown>;
         const createdAt = asString(r.createdAt);
         return {
-          id: asString(r.id),
+          id: asIdString(r.id),
           createdAt: Number.isNaN(new Date(createdAt).getTime()) ? new Date().toISOString() : createdAt,
           customerName: asString(r.customerName),
           customerPhone: asString(r.customerPhone),

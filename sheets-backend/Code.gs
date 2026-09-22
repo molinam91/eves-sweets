@@ -268,13 +268,21 @@ function saveConfig_(config) {
 function addOrder_(order) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ensureSheet_(ss, TABS.ORDERS, ORDER_HEADERS);
-  var id = Utilities.formatString("%04d", sheet.getLastRow());
+  var lastRow = sheet.getLastRow();
+  var id = Utilities.formatString("%04d", lastRow);
   sheet.appendRow([
     id, order.createdAt, order.customerName, order.customerPhone, order.fulfillment,
     order.hasCatering, order.address, order.deliveryLabel, order.paymentMethod, order.notes,
     order.promoCode || "", order.subtotal, order.discount, order.deliveryFee, order.total,
     "new", JSON.stringify(order.items || []),
   ]);
+  // Sheets silently reinterprets a numeric-looking cell like "0003" as the number 3,
+  // dropping the padding -- appendRow above already wrote it that way. Re-set the cell
+  // as plain text so it reads back exactly as written (the client already tolerates a
+  // number here too, but this keeps the sheet itself showing the real id and avoids the
+  // type drift that made every order look duplicated when merged with local state).
+  var idCol = ORDER_HEADERS.indexOf("id") + 1;
+  sheet.getRange(lastRow + 1, idCol).setNumberFormat("@").setValue(id);
   return { ok: true, id: id };
 }
 
