@@ -128,10 +128,10 @@ function AdminDashboard() {
   useEffect(() => {
     const todayPacific = pacificNow();
     const weekStart = new Date(todayPacific);
-    weekStart.setDate(todayPacific.getDate() - mondayFirstIndex(todayPacific));
-    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setUTCDate(todayPacific.getUTCDate() - mondayFirstIndex(todayPacific));
+    weekStart.setUTCHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 7);
+    weekEnd.setUTCDate(weekStart.getUTCDate() + 7);
 
     const totals = DAY_LABELS.map(() => 0);
     let orderCount = 0;

@@ -96,6 +96,7 @@ type UIStrings = {
   admin_new_password: string;
   admin_new_password_placeholder: string;
   admin_password_saved: string;
+  admin_sync_warning: string;
   language: string;
 };
 
@@ -211,6 +212,8 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_new_password: "New password",
     admin_new_password_placeholder: "Leave blank to keep the current one",
     admin_password_saved: "Password updated.",
+    admin_sync_warning:
+      "Saved on this device, but it could not be confirmed on the shared Sheet. Make sure the Apps Script is deployed as a new version, then check your connection.",
     language: "Language",
   },
   es: {
@@ -325,6 +328,8 @@ export const UI_STRINGS: Record<Locale, UIStrings> = {
     admin_new_password: "Nueva contrasena",
     admin_new_password_placeholder: "Dejar en blanco para no cambiarla",
     admin_password_saved: "Contrasena actualizada.",
+    admin_sync_warning:
+      "Se guardo en este dispositivo, pero no se pudo confirmar en la hoja compartida. Verifica que el Apps Script este desplegado como version nueva, y tu conexion.",
     language: "Idioma",
   },
 };

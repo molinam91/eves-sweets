@@ -58,7 +58,8 @@ type StoredConfig = {
 type StoreConfigContextValue = {
   rules: StoreRules;
   promoCodes: PromoCode[];
-  updateRules: (rules: StoreRules) => void;
+  /** Resolves true once the shared Sheet actually has this value; false if only saved locally. */
+  updateRules: (rules: StoreRules) => Promise<boolean>;
   addPromoCode: (promo: PromoCode) => void;
   updatePromoCode: (code: string, promo: PromoCode) => void;
   deletePromoCode: (code: string) => void;
@@ -116,10 +117,27 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     };
   }, []);
 
-  const updateRules = useCallback((next: StoreRules) => {
+  const updateRules = useCallback(async (next: StoreRules) => {
     userEditedRef.current = true;
     setRules(next);
-    saveConfigToBackend(next);
+    const result = await saveConfigToBackend(next);
+    if (!result?.ok) return false;
+    // A save can return ok:true even when nothing actually changed: an Apps Script
+    // deployment that hasn't been redeployed past "New version" after pasting newer
+    // code still runs its old column layout, silently drops fields it doesn't know
+    // (like whatsappNumbers/socialTiktok/contactEmail), and reports success anyway.
+    // Read the snapshot back and confirm what we sent is really what's there now.
+    const check = await fetchBackendSnapshot();
+    if (!check) return false;
+    return (
+      JSON.stringify(check.config.whatsappNumbers) === JSON.stringify(next.whatsappNumbers) &&
+      check.config.socialTiktok === next.socialTiktok &&
+      check.config.socialInstagram === next.socialInstagram &&
+      check.config.socialFacebook === next.socialFacebook &&
+      check.config.contactEmail === next.contactEmail &&
+      JSON.stringify(check.config.contactPhones) === JSON.stringify(next.contactPhones) &&
+      check.config.adminPasswordHash === next.adminPasswordHash
+    );
   }, []);
 
   const addPromoCode = useCallback((promo: PromoCode) => {
