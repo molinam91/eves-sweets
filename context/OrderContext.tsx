@@ -32,41 +32,58 @@ type OrderContextValue = {
 
 const OrderContext = createContext<OrderContextValue | null>(null);
 
-/** Same reasoning as MenuContext's sanitizer: heal any stale bad order saved before this fix existed. */
+/**
+ * Same reasoning as MenuContext's sanitizer: heal any stale bad order saved before this
+ * fix existed. A blank id is never a real order -- it's the fingerprint of the id-type
+ * bug (Sheets turning "0003" into the number 3, which the old sanitizer then read as "")
+ * that made every backend order collapse onto the same key and get merged in as a
+ * duplicate. Dropping those here, plus keeping only the first of any repeated id, self-heals
+ * a browser's already-polluted cache the next time it loads, no manual cache-clearing needed.
+ */
 function sanitizeStoredOrders(parsed: unknown): Order[] {
   if (!Array.isArray(parsed)) return [];
   const num = (v: unknown, fallback = 0) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : fallback;
   };
-  return parsed.map((raw) => {
-    const o = (raw ?? {}) as Partial<Order> & Record<string, unknown>;
-    return {
-      ...(o as Order),
-      createdAt: Number.isNaN(new Date(String(o.createdAt)).getTime()) ? new Date().toISOString() : String(o.createdAt),
-      subtotal: num(o.subtotal),
-      discount: num(o.discount),
-      deliveryFee: num(o.deliveryFee),
-      total: num(o.total),
-      items: Array.isArray(o.items)
-        ? o.items.map((raw2) => {
-            const line = (raw2 ?? {}) as Record<string, unknown>;
-            return {
-              ...line,
-              qty: num(line.qty, 1),
-              unitPrice: num(line.unitPrice),
-              lineTotal: num(line.lineTotal),
-              addons: Array.isArray(line.addons)
-                ? line.addons.map((a) => {
-                    const addon = (a ?? {}) as Record<string, unknown>;
-                    return { ...addon, price: num(addon.price) };
-                  })
-                : [],
-            };
-          })
-        : [],
-    } as Order;
-  });
+  const seenIds = new Set<string>();
+  return parsed
+    .filter((raw) => {
+      const id = (raw as Record<string, unknown> | null)?.id;
+      if (typeof id !== "string" || !id || seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    })
+    .map((raw) => {
+      const o = (raw ?? {}) as Partial<Order> & Record<string, unknown>;
+      return {
+        ...(o as Order),
+        createdAt: Number.isNaN(new Date(String(o.createdAt)).getTime())
+          ? new Date().toISOString()
+          : String(o.createdAt),
+        subtotal: num(o.subtotal),
+        discount: num(o.discount),
+        deliveryFee: num(o.deliveryFee),
+        total: num(o.total),
+        items: Array.isArray(o.items)
+          ? o.items.map((raw2) => {
+              const line = (raw2 ?? {}) as Record<string, unknown>;
+              return {
+                ...line,
+                qty: num(line.qty, 1),
+                unitPrice: num(line.unitPrice),
+                lineTotal: num(line.lineTotal),
+                addons: Array.isArray(line.addons)
+                  ? line.addons.map((a) => {
+                      const addon = (a ?? {}) as Record<string, unknown>;
+                      return { ...addon, price: num(addon.price) };
+                    })
+                  : [],
+              };
+            })
+          : [],
+      } as Order;
+    });
 }
 
 export function OrderProvider({ children }: { children: React.ReactNode }) {
