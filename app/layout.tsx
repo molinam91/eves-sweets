@@ -21,10 +21,29 @@ const scriptFont = Dancing_Script({
   weight: ["500", "600", "700"],
 });
 
+const title = "Eve's Sweets — Desserts and More";
+const description =
+  "Homemade desserts made with love. Order your Eve's Sweets favorites for delivery or pickup.";
+
 export const metadata: Metadata = {
-  title: "Eve's Sweets — Desserts and More",
-  description:
-    "Homemade desserts made with love. Order your Eve's Sweets favorites for delivery or pickup.",
+  // Needed for og:image/twitter:image to resolve to an absolute URL -- without
+  // this, link previews (iMessage, WhatsApp, etc) fall back to guessing an
+  // image from the page itself, which is why Chocoflan's photo (the first
+  // product image in the markup) was showing up instead of the logo.
+  metadataBase: new URL("https://unrivaled-cascaron-acb7ff.netlify.app"),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
