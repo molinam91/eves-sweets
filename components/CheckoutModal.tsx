@@ -140,12 +140,20 @@ export default function CheckoutModal() {
     }
 
     const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-    if (waWindow) waWindow.location.href = waUrl;
-    else window.open(waUrl, "_blank", "noopener");
-
     const customerName = name.trim();
     clearCart();
     openConfirmation(customerName);
+
+    // Give this tab a moment to actually paint the confirmation screen before
+    // handing off to WhatsApp. Some mobile browsers (in-app webviews in
+    // particular) don't support a real second tab and silently reuse this
+    // same window for waWindow -- redirecting it right away, before the
+    // confirmation ever rendered, is what left customers looking at a blank
+    // page instead of a thank-you.
+    window.setTimeout(() => {
+      if (waWindow && !waWindow.closed) waWindow.location.href = waUrl;
+      else window.open(waUrl, "_blank", "noopener");
+    }, 400);
   }
 
   return (
