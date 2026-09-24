@@ -49,6 +49,7 @@ const DEFAULT_PHOTO_BY_ID = new Map(DEFAULT_PRODUCTS.map((p) => [p.id, p.photo])
 // would otherwise also match it (plain "banana" + "bread").
 const DEFAULT_PHOTO_BY_NAME_TOKENS: { tokens: string[]; photo: string }[] = [
   { tokens: ["party", "gelatin"], photo: "/menu/gelatina-mosaico-party-size.jpg" },
+  { tokens: ["gelatina", "leche"], photo: "/menu/gelatina-de-leche.jpg" },
   { tokens: ["jalapeno", "cheddar"], photo: "/menu/jalapeno-cheddar-bread.jpg?v=2" },
   { tokens: ["habanero", "cheddar"], photo: "/menu/habanero-cheddar-bread.jpg?v=2" },
   { tokens: ["garlic"], photo: "/menu/garlic-cheese-loaf.jpg" },
@@ -67,6 +68,32 @@ function defaultPhotoByName(name: string): string | undefined {
     entry.tokens.every((token) => normalized.includes(token))
   );
   return match?.photo;
+}
+
+/**
+ * A newly added item always lands as the last row in the sheet (both a manual
+ * append and the admin form's addProduct add to the end), so without this it
+ * would always display at the very bottom of the menu -- even a new flavor of
+ * something Jayro already sells elsewhere in the grid. Keeps items whose name
+ * shares a family keyword clustered together, at the position of the first
+ * one, instead of scattered in raw sheet order.
+ */
+const GROUPED_NAME_FAMILIES = ["gelatina"];
+
+function familyKeyword(name: string): string | undefined {
+  const normalized = slugify(name);
+  return GROUPED_NAME_FAMILIES.find((keyword) => normalized.includes(keyword));
+}
+
+function groupByNameFamily(items: Product[]): Product[] {
+  const firstGroupedIdx = items.findIndex((p) => familyKeyword(p.name));
+  if (firstGroupedIdx === -1) return items;
+  const grouped = items.filter((p) => familyKeyword(p.name));
+  const rest = items.filter((p) => !familyKeyword(p.name));
+  const insertAt = items.slice(0, firstGroupedIdx).filter((p) => !familyKeyword(p.name)).length;
+  const result = [...rest];
+  result.splice(insertAt, 0, ...grouped);
+  return result;
 }
 
 /**
@@ -215,7 +242,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     saveMenuToBackend(DEFAULT_PRODUCTS.map(toBackendRow));
   }, []);
 
-  const menu = useMemo(() => products.filter((p) => !p.isCatering), [products]);
+  const menu = useMemo(
+    () => groupByNameFamily(products.filter((p) => !p.isCatering)),
+    [products]
+  );
   const catering = useMemo(() => products.filter((p) => p.isCatering), [products]);
   const findProduct = useCallback((id: string) => products.find((p) => p.id === id), [products]);
 

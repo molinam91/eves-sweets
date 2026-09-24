@@ -22,4 +22,5 @@ export const BUNDLED_PHOTOS: BundledPhoto[] = [
   { photo: "/menu/fitness-banana-bread.jpg", label: "Fitness Banana Bread" },
   { photo: "/menu/banana-bread.jpg", label: "Banana Bread" },
   { photo: "/menu/gelatina-mosaico-party-size.jpg", label: "Gelatina Mosaico (Party Size)" },
+  { photo: "/menu/gelatina-de-leche.jpg", label: "Gelatina de Leche" },
 ];
